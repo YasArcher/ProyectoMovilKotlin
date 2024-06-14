@@ -22,23 +22,27 @@ import ec.yasuodev.proyecto_movil.R
 fun DynamicField(
     value: String,
     onTextFieldChange: (String) -> Unit,
-    isPassword: Boolean = false,
+    isPassword: Number = 0,
     passwordVisible: Boolean? = false,
     onVisibilityChange: (() -> Unit)? = null
 ) {
     // Actualizar el tipo de teclado si es una contraseña
-    val type = if (isPassword) {
+    val type = if (isPassword == 0 ) {
         if (passwordVisible == true) KeyboardType.Text else KeyboardType.Password
     } else {
         KeyboardType.Text
     }
-    val placeholder = if (isPassword) {
+    val placeholder = if (isPassword == 0) {
         "Contraseña"
-    } else {
+    } else if (isPassword == 1) {
         "Email"
+    } else if(isPassword == 2){
+        "Nombre de Usuario"
+    } else {
+        ""
     }
 
-    val image = if (isPassword) {
+    val image = if (isPassword==0) {
         if (passwordVisible == true) {
             painterResource(id = R.drawable.visibility_24px)
         } else {

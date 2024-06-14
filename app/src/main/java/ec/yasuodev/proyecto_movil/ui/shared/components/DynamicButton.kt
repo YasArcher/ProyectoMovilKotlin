@@ -11,14 +11,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun DynamicButton(type: Int, text: String, loginEnable: Boolean, method: () -> Unit) {
+fun DynamicButton(type: Int, text: String, enable: Boolean, method: () -> Unit) {
     Button(
         onClick = { method() },
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp),
         colors = colors(type = type),
-        enabled = loginEnable
+        enabled = enable
     ) {
         Text(text = text)
     }

@@ -1,4 +1,4 @@
-package ec.yasuodev.proyecto_movil.ui.login.utils
+package ec.yasuodev.proyecto_movil.ui.auth.utils
 
 import android.content.Context
 
@@ -13,5 +13,9 @@ class SharedPreferenceHelper (private val context: Context) {
     fun getStringData(key: String): String? {
         val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return sharedPreferences.getString(key, null)
+    }
+    fun removeStringData(key: String){
+        val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        sharedPreferences.edit().remove(key).apply()
     }
 }
