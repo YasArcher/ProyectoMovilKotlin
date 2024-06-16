@@ -65,7 +65,7 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
                         confirmPassword
                     )
                 },
-                isPassword = 1,
+                tipo = 1,
             )
             Spacer(modifier = Modifier.padding(4.dp))
             DynamicText(
@@ -83,7 +83,7 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
                         confirmPassword
                     )
                 },
-                isPassword = 0,
+                tipo = 0,
                 passwordVisible = passwordVisible,
                 onVisibilityChange = { viewModel.togglePasswordVisibility() }
             )
@@ -103,7 +103,7 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
                         newValue
                     )
                 },
-                isPassword = 0,
+                tipo = 0,
                 passwordVisible = confirmPasswordVisible,
                 onVisibilityChange = { viewModel.toggleConfirmPasswordVisibility() }
             )

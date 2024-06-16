@@ -55,7 +55,7 @@ fun Reset(modifier: Modifier, viewModel: ResetViewModel, navController: NavContr
             DynamicField(
                 value = email,
                 onTextFieldChange = { newValue -> viewModel.onResetChanged(newValue) },
-                isPassword = 1,
+                tipo = 1,
             )
             Spacer(modifier = Modifier.padding(4.dp))
             DynamicText(

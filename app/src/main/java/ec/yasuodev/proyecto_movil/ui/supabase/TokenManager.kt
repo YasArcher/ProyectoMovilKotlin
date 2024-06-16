@@ -33,7 +33,6 @@ object TokenManager {
         return !token.isNullOrEmpty()
     }
 
-    // Función para refrescar el token
     suspend fun refreshAccessToken(context: Context) {
         try {
             val token = getToken(context)

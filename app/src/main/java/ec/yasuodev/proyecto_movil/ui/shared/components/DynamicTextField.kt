@@ -22,27 +22,30 @@ import ec.yasuodev.proyecto_movil.R
 fun DynamicField(
     value: String,
     onTextFieldChange: (String) -> Unit,
-    isPassword: Number = 0,
+    tipo: Int = -1, // Default -1 para los casos donde no se debe mostrar ningún icono
     passwordVisible: Boolean? = false,
     onVisibilityChange: (() -> Unit)? = null
 ) {
-    // Actualizar el tipo de teclado si es una contraseña
-    val type = if (isPassword == 0 ) {
-        if (passwordVisible == true) KeyboardType.Text else KeyboardType.Password
-    } else {
-        KeyboardType.Text
-    }
-    val placeholder = if (isPassword == 0) {
-        "Contraseña"
-    } else if (isPassword == 1) {
-        "Email"
-    } else if(isPassword == 2){
-        "Nombre de Usuario"
-    } else {
-        ""
+    val type = when (tipo) {
+        0 -> if (passwordVisible == true) KeyboardType.Text else KeyboardType.Password
+        1 -> KeyboardType.Email
+        else -> KeyboardType.Text
     }
 
-    val image = if (isPassword==0) {
+    val placeholder = when (tipo) {
+        0 -> "Contraseña"
+        1 -> "Email"
+        2 -> "Nombre de Usuario"
+        else -> ""
+    }
+
+    val leadingIconImage = when (tipo) {
+        0 -> painterResource(id = R.drawable.key_24px)
+        1 -> painterResource(id = R.drawable.mail_24px)
+        else -> null
+    }
+
+    val trailingIconImage = if (tipo == 0) {
         if (passwordVisible == true) {
             painterResource(id = R.drawable.visibility_24px)
         } else {
@@ -60,9 +63,12 @@ fun DynamicField(
         keyboardOptions = KeyboardOptions(keyboardType = type),
         singleLine = true,
         maxLines = 1,
-        visualTransformation = if (type == KeyboardType.Password) PasswordVisualTransformation() else VisualTransformation.None,
-        trailingIcon = {
-            image?.let {
+        visualTransformation = if (tipo == 0 && !passwordVisible!!) PasswordVisualTransformation() else VisualTransformation.None,
+        leadingIcon = leadingIconImage?.let {
+            { Icon(painter = it, contentDescription = null) }
+        },
+        trailingIcon = trailingIconImage?.let {
+            {
                 Icon(
                     painter = it,
                     contentDescription = null,

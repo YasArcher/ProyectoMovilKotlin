@@ -43,6 +43,7 @@ fun LoginScreen(viewModel: LoginViewModel, navController: NavController) {
 
 @Composable
 fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavController) {
+
     val context = LocalContext.current
     val email: String by viewModel.email.observeAsState(initial = "")
     val password: String by viewModel.password.observeAsState(initial = "")
@@ -63,7 +64,7 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
             DynamicField(
                 value = email,
                 onTextFieldChange = { newValue -> viewModel.onLoginChanged(newValue, password) },
-                isPassword = 1,
+                tipo = 1,
             )
             Spacer(modifier = Modifier.padding(4.dp))
             DynamicText(
@@ -75,7 +76,7 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
             DynamicField(
                 value = password,
                 onTextFieldChange = { newValue -> viewModel.onLoginChanged(email, newValue) },
-                isPassword = 0,
+                tipo = 0,
                 passwordVisible = passwordVisible,
                 onVisibilityChange = { viewModel.togglePasswordVisibility() }
             )
