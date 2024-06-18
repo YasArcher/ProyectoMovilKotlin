@@ -22,20 +22,23 @@ import ec.yasuodev.proyecto_movil.R
 fun DynamicField(
     value: String,
     onTextFieldChange: (String) -> Unit,
-    tipo: Int = -1, // Default -1 para los casos donde no se debe mostrar ningún icono
+    tipo: Int = -1,
     passwordVisible: Boolean? = false,
     onVisibilityChange: (() -> Unit)? = null
 ) {
     val type = when (tipo) {
         0 -> if (passwordVisible == true) KeyboardType.Text else KeyboardType.Password
         1 -> KeyboardType.Email
+        5 -> KeyboardType.Number
         else -> KeyboardType.Text
     }
 
     val placeholder = when (tipo) {
         0 -> "Contraseña"
         1 -> "Email"
-        2 -> "Nombre de Usuario"
+        2 -> "Nombre"
+        3 -> "Apellido"
+        4 -> "Nombre de Usuario"
         else -> ""
     }
 

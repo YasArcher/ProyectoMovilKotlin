@@ -2,6 +2,7 @@ package ec.yasuodev.proyecto_movil.ui.shared.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -16,11 +17,11 @@ fun DynamicButton(type: Int, text: String, enable: Boolean, method: () -> Unit) 
         onClick = { method() },
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp),
+            .height(43.dp),
         colors = colors(type = type),
         enabled = enable
     ) {
-        Text(text = text)
+        Text(text = text, style = MaterialTheme.typography.body1 )
     }
 }
 
@@ -35,17 +36,17 @@ private fun colors(type: Int) = when (type) {
     )
 
     2 -> ButtonDefaults.buttonColors(
-        contentColor = Color.Black,
+        contentColor = Color.White,
         containerColor = Color.Green,
         disabledContentColor = Color.LightGray,
         disabledContainerColor = Color.DarkGray
     )
 
     3 -> ButtonDefaults.buttonColors(
-        contentColor = Color.Yellow,
+        contentColor = Color.White,
         containerColor = Color.Red,
         disabledContentColor = Color.DarkGray,
-        disabledContainerColor = Color.LightGray
+        disabledContainerColor = Color.LightGray,
     )
 
     else -> ButtonDefaults.buttonColors(

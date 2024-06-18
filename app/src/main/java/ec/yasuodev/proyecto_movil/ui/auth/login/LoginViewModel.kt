@@ -7,12 +7,15 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ec.yasuodev.proyecto_movil.ui.auth.models.UserState
+import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
+import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
-import ec.yasuodev.proyecto_movil.ui.supabase.TokenManager
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class LoginViewModel : ViewModel() {
     private val _email = MutableLiveData<String>()
@@ -82,11 +85,21 @@ class LoginViewModel : ViewModel() {
                     this.email = email
                     this.password = password
                 }
-                TokenManager.saveToken(
-                    context,
-                    SupabaseClient.client.auth.currentSessionOrNull().toString()
-                )
-                _userState.value = UserState.Success("Inicio de sesión exitoso")
+                val sessionDetails = SupabaseClient.client.auth.currentSessionOrNull()
+                if (sessionDetails != null) {
+                    TokenManager.saveToken(
+                        context,
+                        sessionDetails.toString(),
+                        sessionDetails.accessToken.toString()
+                    )
+                    val store =  Store(
+                        id = generateUUID(),
+                        name = "Mi negocio",
+                        owner = sessionDetails.user!!.id
+                    )
+                    SupabaseClient.client.from("business").insert(store)
+                    _userState.value = UserState.Success("Inicio de sesión exitoso")
+                }
             } catch (e: Exception) {
                 _userState.value =
                     UserState.Error("Error al iniciar sesión: Revise sus credenciales")
@@ -112,13 +125,17 @@ class LoginViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 if (TokenManager.isTokenValid(context)) {
-                    TokenManager.getToken(context)
+                    TokenManager.getAccessToken(context)
                         ?.let { SupabaseClient.client.auth.retrieveUser(it) }
-                    SupabaseClient.client.auth.refreshCurrentSession()
-                    TokenManager.saveToken(
-                        context,
-                        SupabaseClient.client.auth.currentSessionOrNull().toString()
-                    )
+                    val sessionDetails = SupabaseClient.client.auth.currentSessionOrNull()
+                    if (sessionDetails != null) {
+                        TokenManager.saveToken(
+                            context,
+                            sessionDetails.toString(),
+                            sessionDetails.accessToken.toString()
+                        )
+                        _userState.value = UserState.Success("Inicio de sesión exitoso")
+                    }
                     _userState.value = UserState.Success("Sesión verificada")
                 } else {
                     _userState.value = UserState.Error("No se ha iniciado sesión")
@@ -135,8 +152,13 @@ class LoginViewModel : ViewModel() {
                 SupabaseClient.client.auth.resetPasswordForEmail(email)
                 _userState.value = UserState.Success("Correo de recuperación enviado")
             } catch (e: Exception) {
-                _userState.value = UserState.Error("Error al enviar correo de recuperación: ${e.message}")
+                _userState.value =
+                    UserState.Error("Error al enviar correo de recuperación: ${e.message}")
             }
         }
+    }
+
+    private fun generateUUID(): String {
+        return UUID.randomUUID().toString()
     }
 }

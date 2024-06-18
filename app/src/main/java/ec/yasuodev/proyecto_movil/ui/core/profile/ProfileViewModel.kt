@@ -1,50 +1,38 @@
-package ec.yasuodev.proyecto_movil.ui.core.home
+package ec.yasuodev.proyecto_movil.ui.core.profile
 
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ec.yasuodev.proyecto_movil.ui.auth.models.UserState
 import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenDecoding
 import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
-import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import ec.yasuodev.proyecto_movil.ui.shared.models.User
 import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
+import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
-    private val _token = MutableLiveData<String>()
+class ProfileViewModel: ViewModel() {
     private val _user = MutableLiveData<User>()
-    private val _userID = MutableLiveData<String>()
-    private val _store = MutableLiveData<Store>()
-
-    val token: LiveData<String> = _token
     val user: LiveData<User> = _user
-    val userID: LiveData<String> = _userID
-    val store: LiveData<Store> = _store
+    private val _userState = MutableLiveData<UserState>(UserState.Loading)
+    val userState: LiveData<UserState> = _userState
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
 
-
-    fun fetchToken(context: Context) {
-        _token.value = TokenManager.getToken(context)
-        getUserID()
-    }
-
-    suspend fun loading() {
+    suspend fun onCloseSelected() {
+        _isLoading.value = true
         delay(4000)
+        _isLoading.value = false
     }
 
-    private fun getUserID() {
-        val decodedToken = TokenDecoding.decodeJWT(_token.value ?: "")
-        _userID.value = decodedToken.get("sub") as? String ?: "No UserID found"
-        if (_userID.value != null) {
-            fetchUserName()
-        }
-    }
-
-    private fun fetchUserName() {
+    fun fetchUser(context: Context) {
+        val token = TokenManager.getToken(context)
+        val userID = TokenDecoding.decodeJWT(token ?: "").get("sub") as? String ?: "No UserID found"
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("users").select(
@@ -58,7 +46,7 @@ class HomeViewModel : ViewModel() {
                     )
                 ) {
                     filter {
-                        eq("id", _userID.value ?: "")
+                        eq("id", userID ?: "")
                     }
                 }.decodeSingle<User>()
                 _user.value = response
@@ -67,24 +55,14 @@ class HomeViewModel : ViewModel() {
             }
         }
     }
-
-    fun fetchStore() {
+    fun signOut(context: Context) {
         viewModelScope.launch {
             try {
-                val response = SupabaseClient.client.from("business").select(
-                    columns = Columns.list(
-                        "id",
-                        "name",
-                        "owner",
-                    )
-                ) {
-                    filter {
-                        eq("owner", _userID.value ?: "")
-                    }
-                }.decodeSingle<Store>()
-                _store.value = response
+                SupabaseClient.client.auth.signOut()
+                TokenManager.clearToken(context)
+                _userState.value = UserState.Success("Cierre de sesión exitoso")
             } catch (e: Exception) {
-                e.printStackTrace()
+                _userState.value = UserState.Error("Error al cerrar sesión: ${e.message}")
             }
         }
     }

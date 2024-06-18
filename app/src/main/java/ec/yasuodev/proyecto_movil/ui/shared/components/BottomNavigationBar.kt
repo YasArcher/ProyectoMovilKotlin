@@ -1,5 +1,7 @@
+
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.ContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -15,6 +17,7 @@ fun BottomNavigationBar(navController: NavController) {
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Profile,
+        BottomNavItem.Products,
         BottomNavItem.Settings
     )
 
@@ -30,13 +33,15 @@ fun BottomNavigationBar(navController: NavController) {
                 icon = { Icon(painterResource(id = item.icon), contentDescription = item.title) },
                 label = { Text(text = item.title) },
                 selected = currentRoute == item.route,
+                selectedContentColor = MaterialTheme.colors.primary,
+                unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium),
                 onClick = {
                     navController.navigate(item.route) {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }
-                }
+                },
             )
         }
     }
@@ -45,5 +50,6 @@ fun BottomNavigationBar(navController: NavController) {
 sealed class BottomNavItem(var title: String, var icon: Int, var route: String) {
     object Home : BottomNavItem("Home", R.drawable.home_24px, "home")
     object Profile : BottomNavItem("Perfil", R.drawable.person_24px, "profile")
+    object Products : BottomNavItem("Product", R.drawable.grocery_24px, "products")
     object Settings : BottomNavItem("Ajustes", R.drawable.settings_24px, "settings")
 }

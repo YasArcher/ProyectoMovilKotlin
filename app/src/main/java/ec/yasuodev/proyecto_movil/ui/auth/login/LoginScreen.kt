@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import ec.yasuodev.proyecto_movil.R
 import ec.yasuodev.proyecto_movil.ui.auth.models.UserState
+import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicButton
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicField
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicText
@@ -52,6 +54,13 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
     val passwordVisible: Boolean by viewModel.passwordVisible.observeAsState(initial = false)
     val userState: UserState by viewModel.userState.observeAsState(initial = UserState.Loading)
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(key1 = viewModel) {
+        if (TokenManager.getToken(context) !=null) {
+            navController.navigate("home")
+        }
+    }
+
     if (isLoading) {
         Box(modifier = Modifier.fillMaxSize()) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
@@ -123,6 +132,7 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
             DynamicButton(type = 2, text = "Registrame", enable = true) {
                 navController.navigate("register")
             }
+            Spacer(modifier = Modifier.padding(8.dp))
         }
     }
 }
@@ -141,7 +151,7 @@ fun ForgotPassword(modifier: Modifier, navController: NavController) {
 @Composable
 fun HeaderImage(modifier: Modifier) {
     Image(
-        painter = painterResource(id = R.drawable.tienda),
+        painter = painterResource(id = R.drawable.cart_svgrepo_com),
         contentDescription = "Header Image",
         modifier = modifier
     )
