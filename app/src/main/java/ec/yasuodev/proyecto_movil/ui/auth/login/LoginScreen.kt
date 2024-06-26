@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,6 +67,14 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
         }
     } else {
         Column(modifier = modifier) {
+            //text ="Bienvenido", fontSize = 24.sp, color = Color.Black, modifier = Modifier.align(Alignment.CenterHorizontally)
+            Text(
+                text = "Bienvenido",
+                fontSize = 24.sp,
+                color = Color.Black,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
             HeaderImage(Modifier.align((Alignment.CenterHorizontally)))
             Spacer(modifier = Modifier.padding(16.dp))
             /*Email TextField*/

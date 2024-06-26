@@ -1,5 +1,6 @@
 package ec.yasuodev.proyecto_movil.ui.core.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,12 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,6 +31,7 @@ import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import ec.yasuodev.proyecto_movil.ui.shared.models.User
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
     val context = LocalContext.current
@@ -39,16 +42,15 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
         viewModel.fetchToken(context)
         viewModel.fetchStore()
     }
-    val user by viewModel.user.observeAsState(User("", "", "", "", "", false))
+    val user by viewModel.user.observeAsState(User("", "", "", "", "", ""))
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Bienvenido ${user.nickName}", style = MaterialTheme.typography.h6
+                        text = "Bienvenido ${user.nickName}", style = MaterialTheme.typography.titleLarge
                     )
                 },
-                backgroundColor = MaterialTheme.colors.primary
             )
         }
     ) { innerPadding ->
@@ -57,27 +59,29 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            HomeContent(viewModel)
+            HomeContent(viewModel, navController)
         }
     }
 }
 
 @Composable
-fun HomeContent(viewModel: HomeViewModel) {
-    val store by viewModel.store.observeAsState(Store("", "", ""))
-
+fun HomeContent(viewModel: HomeViewModel, navController: NavController) {
+    val store by viewModel.store.observeAsState(Store("", "", "", ""))
     Column(modifier = Modifier.fillMaxSize()) {
-        DefaultCard(store.name)
+        DefaultCard(store, navController)
     }
 }
 
 @Composable
-fun DefaultCard(nombre: String) {
+fun DefaultCard(store: Store, navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .clickable {
+                navController.navigate("business/${store.id}")
+            },
         contentAlignment = Alignment.Center
     ) {
         ElevatedCard(
@@ -91,9 +95,9 @@ fun DefaultCard(nombre: String) {
         ) {
             Column {
                 Text(
-                    text = nombre + " hoy",
+                    text = "${store.name} hoy",
                     modifier = Modifier.padding(10.dp),
-                    style = MaterialTheme.typography.h5
+                    style = MaterialTheme.typography.labelSmall
                 )
                 Spacer(modifier = Modifier.padding(7.dp))
                 Row(
@@ -105,12 +109,12 @@ fun DefaultCard(nombre: String) {
                 ) {
                     Text(
                         text = "Ingresos",
-                        style = MaterialTheme.typography.h6,
+                        style = MaterialTheme.typography.labelMedium,
                         color = Color.Blue
                     )
                     Text(
                         text = "Egresos",
-                        style = MaterialTheme.typography.h6,
+                        style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.padding(start = 10.dp),
                         color = Color.Red
                     )
@@ -124,12 +128,12 @@ fun DefaultCard(nombre: String) {
                 ) {
                     Text(
                         text = "45.27 $",
-                        style = MaterialTheme.typography.h6,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = Color.Blue
                     )
                     Text(
                         text = "8.50 $",
-                        style = MaterialTheme.typography.h6,
+                        style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(start = 10.dp),
                         color = Color.Red
                     )
@@ -139,6 +143,7 @@ fun DefaultCard(nombre: String) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen() {
     Scaffold(
@@ -147,7 +152,6 @@ fun ProfileScreen() {
                 title = {
                     Text(text = "Cuenta")
                 },
-                backgroundColor = MaterialTheme.colors.primary
             )
         }
     ) { innerPadding ->

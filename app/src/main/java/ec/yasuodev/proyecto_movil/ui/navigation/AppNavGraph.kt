@@ -1,5 +1,10 @@
+package ec.yasuodev.proyecto_movil.ui.navigation
+
+import BottomNavigationBar
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Scaffold
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -15,6 +20,8 @@ import ec.yasuodev.proyecto_movil.ui.auth.register.RegisterScreen
 import ec.yasuodev.proyecto_movil.ui.auth.register.RegisterViewModel
 import ec.yasuodev.proyecto_movil.ui.auth.reset.ResetScreen
 import ec.yasuodev.proyecto_movil.ui.auth.reset.ResetViewModel
+import ec.yasuodev.proyecto_movil.ui.core.business.BusinessScreen
+import ec.yasuodev.proyecto_movil.ui.core.business.BusinessViewModel
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeViewModel
 import ec.yasuodev.proyecto_movil.ui.core.home.SettingsScreen
@@ -31,6 +38,7 @@ import ec.yasuodev.proyecto_movil.ui.core.profile.ProfileViewModel
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import ec.yasuodev.proyecto_movil.ui.shared.models.User
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavGraph() {
     val navController = rememberNavController()
@@ -47,7 +55,7 @@ fun AppNavGraph() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "login",
+            startDestination = "business/126b4bc6-bdea-4542-a3c8-0d75ed75d887",
             Modifier.padding(innerPadding)
         ) {
             composable("login") {
@@ -75,7 +83,7 @@ fun AppNavGraph() {
                     navArgument("lastName") { type = NavType.StringType },
                     navArgument("email") { type = NavType.StringType },
                     navArgument("nickName") { type = NavType.StringType },
-                    navArgument("image") { type = NavType.BoolType }
+                    navArgument("image") { type = NavType.StringType }
                 )) { backStackEntry ->
                 val user = User(
                     backStackEntry.arguments?.getString("id") ?: "",
@@ -83,7 +91,7 @@ fun AppNavGraph() {
                     backStackEntry.arguments?.getString("lastName") ?: "Nuevo",
                     backStackEntry.arguments?.getString("email") ?: "",
                     backStackEntry.arguments?.getString("nickName") ?: "user",
-                    backStackEntry.arguments?.getBoolean("image") ?: false
+                    backStackEntry.arguments?.getString("image") ?: "noImage"
                 )
                 EditProfileScreen(EditProfileViewModel(), navController, user)
             }
@@ -114,6 +122,15 @@ fun AppNavGraph() {
                     backStackEntry.arguments?.getInt("stock") ?: 0
                 )
                 EditProductScreen(EditProductViewModel(), navController, product)
+            }
+            composable("business/{store}", arguments = listOf(
+                navArgument("store") { type = NavType.StringType }
+            )) { backStackEntry ->
+                BusinessScreen(
+                    BusinessViewModel(),
+                    navController,
+                    backStackEntry.arguments?.getString("store") ?: ""
+                )
             }
         }
     }

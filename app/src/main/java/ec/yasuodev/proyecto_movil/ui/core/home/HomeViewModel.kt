@@ -76,6 +76,7 @@ class HomeViewModel : ViewModel() {
                         "id",
                         "name",
                         "owner",
+                        "business_image"
                     )
                 ) {
                     filter {

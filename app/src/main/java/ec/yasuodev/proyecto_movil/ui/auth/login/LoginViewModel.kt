@@ -8,11 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ec.yasuodev.proyecto_movil.ui.auth.models.UserState
 import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
-import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
-import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -92,12 +90,6 @@ class LoginViewModel : ViewModel() {
                         sessionDetails.toString(),
                         sessionDetails.accessToken.toString()
                     )
-                    val store =  Store(
-                        id = generateUUID(),
-                        name = "Mi negocio",
-                        owner = sessionDetails.user!!.id
-                    )
-                    SupabaseClient.client.from("business").insert(store)
                     _userState.value = UserState.Success("Inicio de sesión exitoso")
                 }
             } catch (e: Exception) {

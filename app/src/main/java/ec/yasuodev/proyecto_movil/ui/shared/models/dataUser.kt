@@ -9,5 +9,5 @@ data class User (
     val lastName: String,
     val email: String,
     val nickName: String,
-    val image: Boolean
+    val image: String
 )

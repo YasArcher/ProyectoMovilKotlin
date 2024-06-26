@@ -10,10 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,6 +35,7 @@ import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicButton
 import ec.yasuodev.proyecto_movil.ui.shared.models.User
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel, navController: NavController) {
     Scaffold(
@@ -42,7 +44,6 @@ fun ProfileScreen(viewModel: ProfileViewModel, navController: NavController) {
                 title = {
                     Text(text = "Cuenta")
                 },
-                backgroundColor = MaterialTheme.colors.primary
             )
         }
     ) { innerPadding ->
@@ -59,7 +60,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, navController: NavController) {
 @Composable
 fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavController) {
     val context = LocalContext.current
-    val user by viewModel.user.observeAsState(User("", "", "", "", "", false))
+    val user by viewModel.user.observeAsState(User("", "", "", "", "", ""))
     val isLoading by viewModel.isLoading.observeAsState(false)
     val userState by viewModel.userState.observeAsState(UserState.Loading)
     val coroutineScope = rememberCoroutineScope()
@@ -72,12 +73,11 @@ fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavC
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-
         HeaderImage(
             modifier = Modifier
                 .size(300.dp)
                 .align(Alignment.CenterHorizontally),
-            "https://vgnnieizrwmjemlnziaj.supabase.co/storage/v1/object/public/storeApp/users/${user.id}.jpg",
+            "https://vgnnieizrwmjemlnziaj.supabase.co/storage/v1/object/public/storeApp/users/${user.image}.jpg",
             user.image
         )
 
@@ -85,7 +85,7 @@ fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavC
 
         Text(
             text = "Nombre: ${user.name}",
-            style = MaterialTheme.typography.h6,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .horizontalScroll(rememberScrollState()),
@@ -94,7 +94,7 @@ fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavC
         )
         Text(
             text = "Apellido: ${user.lastName}",
-            style = MaterialTheme.typography.h6,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .horizontalScroll(rememberScrollState()),
@@ -103,7 +103,7 @@ fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavC
         )
         Text(
             text = "Correo: ${user.email}",
-            style = MaterialTheme.typography.h6,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .horizontalScroll(rememberScrollState()),
@@ -112,7 +112,7 @@ fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavC
         )
         Text(
             text = "Usuario: ${user.nickName}",
-            style = MaterialTheme.typography.h6,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .horizontalScroll(rememberScrollState()),
@@ -121,7 +121,7 @@ fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavC
         )
         Spacer(modifier = Modifier.weight(1f))
         DynamicButton(type = 2, text = "Editar", enable = true) {
-            navController.navigate("editUser/${user.id}/${user.name}/${user.lastName}/${user.email}/${user.nickName}/${user.image}")
+            navController.navigate("editUser/${user.id}/${user.name}/${user.name}/${user.email}/${user.nickName}/${user.image}")
         }
         Spacer(modifier = Modifier.padding(8.dp))
         DynamicButton(type = 3, text = "Cerrar Sesión", enable = true) {
@@ -159,8 +159,8 @@ fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavC
 
 
 @Composable
-fun HeaderImage(modifier: Modifier, url: String, image: Boolean) {
-    if (image) {
+fun HeaderImage(modifier: Modifier, url: String, image: String) {
+    if (image != "noImage") {
         val painter = rememberAsyncImagePainter(url)
         Image(
             painter = painter,

@@ -16,7 +16,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,7 +44,7 @@ fun ProductsScreen(viewModel: ProductsViewModel, navController: NavController) {
 @Composable
 fun Products(modifier: Modifier, viewModel: ProductsViewModel, navController: NavController) {
     val context = LocalContext.current
-    val store: Store by viewModel.store.observeAsState(initial = Store("", "", ""))
+    val store: Store by viewModel.store.observeAsState(initial = Store("", "", "", ""))
     val products: List<Product> by viewModel.products.observeAsState(initial = emptyList())
 
     LaunchedEffect(key1 = viewModel) {
@@ -60,7 +60,7 @@ fun Products(modifier: Modifier, viewModel: ProductsViewModel, navController: Na
                     .weight(1f)
                     .padding(top = 8.dp)
             ) {
-                Text(text = "Nombre")
+                Text(text = "  Producto")
             }
             Column(
                 Modifier

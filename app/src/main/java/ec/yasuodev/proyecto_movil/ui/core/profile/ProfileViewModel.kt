@@ -16,7 +16,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class ProfileViewModel: ViewModel() {
+class ProfileViewModel() : ViewModel() {
     private val _user = MutableLiveData<User>()
     val user: LiveData<User> = _user
     private val _userState = MutableLiveData<UserState>(UserState.Loading)
@@ -32,7 +32,7 @@ class ProfileViewModel: ViewModel() {
 
     fun fetchUser(context: Context) {
         val token = TokenManager.getToken(context)
-        val userID = TokenDecoding.decodeJWT(token ?: "").get("sub") as? String ?: "No UserID found"
+        val userID = TokenDecoding.decodeJWT(token ?: "")["sub"] as? String ?: "No UserID found"
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("users").select(
@@ -55,6 +55,7 @@ class ProfileViewModel: ViewModel() {
             }
         }
     }
+
     fun signOut(context: Context) {
         viewModelScope.launch {
             try {

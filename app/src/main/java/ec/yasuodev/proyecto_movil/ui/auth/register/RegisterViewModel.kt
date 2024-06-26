@@ -12,6 +12,7 @@ import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class RegisterViewModel : ViewModel() {
     private val _userState = MutableLiveData<UserState>(UserState.Loading)
@@ -109,7 +110,6 @@ class RegisterViewModel : ViewModel() {
         email: String,
         password: String
     ) {
-        var success = false
         viewModelScope.launch {
             try {
                 SupabaseClient.client.auth.signUpWith(Email) {
@@ -120,7 +120,7 @@ class RegisterViewModel : ViewModel() {
                 _userState.value = UserState.Success("Registro exitoso")
             } catch (e: Exception) {
                 _registerSuccess.value = false
-                _userState.value = UserState.Error("Error al registrarse: ${e.message}")
+                _userState.value = UserState.Error("Error al registrarse: Correo ya registrado")
             }
         }
     }
@@ -131,4 +131,7 @@ class RegisterViewModel : ViewModel() {
         _isLoading.value = false
     }
 
+    private fun generateUUID(): String {
+        return UUID.randomUUID().toString()
+    }
 }
