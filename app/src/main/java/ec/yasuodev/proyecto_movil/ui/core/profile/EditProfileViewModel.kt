@@ -95,8 +95,8 @@ class EditProfileViewModel : ViewModel() {
                 SupabaseClient.client.from("users").update(
                     {
                         set("name", _name.value)
-                        set("lastName", _lastName.value)
-                        set("nickName", _nickName.value)
+                        set("lastname", _lastName.value)
+                        set("nickname", _nickName.value)
                         set("image", imageName)
                     }
                 ) {

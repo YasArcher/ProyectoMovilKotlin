@@ -56,9 +56,9 @@ class HomeViewModel : ViewModel() {
                     columns = Columns.list(
                         "id",
                         "name",
-                        "lastName",
+                        "lastname",
                         "email",
-                        "nickName",
+                        "nickname",
                         "image"
                     )
                 ) {
@@ -81,10 +81,10 @@ class HomeViewModel : ViewModel() {
                 )
                 val response: List<Store> = SupabaseClient.client.postgrest.rpc("get_stores_by_manager", rpcParams)
                     .decodeList()
-                // Maneja el resultado aquí, por ejemplo, actualizar LiveData
+
                 _storeList.value = response
             } catch (e: Exception) {
-               println("**********************${e}************************")
+                e.printStackTrace()
             }
         }
     }

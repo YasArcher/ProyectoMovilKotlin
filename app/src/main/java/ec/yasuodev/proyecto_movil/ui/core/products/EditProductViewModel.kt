@@ -67,11 +67,11 @@ class EditProductViewModel : ViewModel() {
     }
 
     fun isValidPrice(price: String): Boolean {
-        return price.toFloatOrNull() != null && price.toFloat() >= 0
+        return price.toFloatOrNull() != null && price.toDouble() > 0
     }
 
     fun isValidStock(stock: String): Boolean {
-        return stock.toIntOrNull() != null && stock.toInt() >= 0
+        return stock.toIntOrNull() != null && stock.toInt() > 0
     }
 
 

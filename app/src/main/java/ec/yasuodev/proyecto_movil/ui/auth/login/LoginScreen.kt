@@ -7,9 +7,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Text
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,20 +39,37 @@ import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicField
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicText
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(viewModel: LoginViewModel, navController: NavController) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Login(Modifier.align(Alignment.Center), viewModel, navController)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Iniciar Sesión",
+                        style = MaterialTheme.typography.titleLarge.copy(color = Color.White)
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Login(Modifier.align(Alignment.Center), viewModel, navController)
+        }
     }
 }
 
 @Composable
 fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavController) {
-
     val context = LocalContext.current
     val email: String by viewModel.email.observeAsState(initial = "")
     val password: String by viewModel.password.observeAsState(initial = "")
@@ -66,8 +90,9 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         }
     } else {
-        Column(modifier = modifier) {
-            //text ="Bienvenido", fontSize = 24.sp, color = Color.Black, modifier = Modifier.align(Alignment.CenterHorizontally)
+        Column(
+            modifier = modifier.padding(horizontal = 16.dp)
+        ) {
             Text(
                 text = "Bienvenido",
                 fontSize = 24.sp,
@@ -75,9 +100,8 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            HeaderImage(Modifier.align((Alignment.CenterHorizontally)))
+            HeaderImage(Modifier.align(Alignment.CenterHorizontally).size(100.dp))
             Spacer(modifier = Modifier.padding(16.dp))
-            /*Email TextField*/
             DynamicField(
                 value = email,
                 onTextFieldChange = { newValue -> viewModel.onLoginChanged(newValue, password) },
@@ -89,7 +113,6 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
                 state = viewModel.isValidEmail(email)
             )
             Spacer(modifier = Modifier.padding(8.dp))
-            /*Password TextField*/
             DynamicField(
                 value = password,
                 onTextFieldChange = { newValue -> viewModel.onLoginChanged(email, newValue) },
@@ -104,8 +127,7 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
             )
             Spacer(modifier = Modifier.padding(8.dp))
             ForgotPassword(Modifier.align(Alignment.End), navController)
-            Spacer(modifier = Modifier.padding(8.dp))
-            /*Login Button*/
+            Spacer(modifier = Modifier.padding(16.dp))
             DynamicButton(
                 type = 1,
                 text = "Iniciar Sesión",
@@ -140,20 +162,25 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
                     }
                 },
                 textSize = 16f,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             )
+            Spacer(modifier = Modifier.padding(8.dp))
+            DynamicButton(
+                type = 2,
+                text = "Registrame",
+                enable = true,
+                method = { navController.navigate("register") },
+                textSize = 16f,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.padding(8.dp))
         }
-        Spacer(modifier = Modifier.padding(8.dp))
-        /*Register Button*/
-        DynamicButton(
-            type = 2,
-            text = "Registrame",
-            enable = true,
-            method = { navController.navigate("register") })
-        Spacer(modifier = Modifier.padding(8.dp))
     }
 }
-
 
 @Composable
 fun ForgotPassword(modifier: Modifier, navController: NavController) {
@@ -169,7 +196,7 @@ fun ForgotPassword(modifier: Modifier, navController: NavController) {
 @Composable
 fun HeaderImage(modifier: Modifier) {
     Image(
-        painter = painterResource(id = R.drawable.cart_svgrepo_com),
+        painter = painterResource(id = R.drawable.store_svgrepo_com),
         contentDescription = "Header Image",
         modifier = modifier
     )

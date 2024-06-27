@@ -57,7 +57,7 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Bienvenido ${user.nickName}",
+                        text = "Bienvenido ${user.nickname}",
                         style = MaterialTheme.typography.titleLarge.copy(color = Color.White)
                     )
                 },
@@ -150,9 +150,4 @@ fun DefaultCard(store: Store, navController: NavController, user: User, tipo : I
             )
         }
     }
-}
-
-@Composable
-fun SettingsScreen() {
-    // Implementación de la pantalla de configuración, si es necesaria
 }

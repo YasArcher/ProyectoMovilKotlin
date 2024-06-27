@@ -1,10 +1,11 @@
+package ec.yasuodev.proyecto_movil.ui.shared.components
 
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.ContentAlpha
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material3.Icon
 import androidx.compose.material.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource
@@ -22,8 +23,8 @@ fun BottomNavigationBar(navController: NavController) {
     )
 
     BottomNavigation(
-        backgroundColor = MaterialTheme.colors.surface,
-        contentColor = MaterialTheme.colors.onSurface
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        backgroundColor = MaterialTheme.colorScheme.surface
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -33,8 +34,8 @@ fun BottomNavigationBar(navController: NavController) {
                 icon = { Icon(painterResource(id = item.icon), contentDescription = item.title) },
                 label = { Text(text = item.title) },
                 selected = currentRoute == item.route,
-                selectedContentColor = MaterialTheme.colors.primary,
-                unselectedContentColor = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium),
+                selectedContentColor = MaterialTheme.colorScheme.primary,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = ContentAlpha.medium),
                 onClick = {
                     navController.navigate(item.route) {
                         popUpTo(navController.graph.startDestinationId) { saveState = true }
@@ -42,6 +43,7 @@ fun BottomNavigationBar(navController: NavController) {
                         restoreState = true
                     }
                 },
+                alwaysShowLabel = true
             )
         }
     }
@@ -50,6 +52,6 @@ fun BottomNavigationBar(navController: NavController) {
 sealed class BottomNavItem(var title: String, var icon: Int, var route: String) {
     object Home : BottomNavItem("Home", R.drawable.home_24px, "home")
     object Profile : BottomNavItem("Perfil", R.drawable.person_24px, "profile")
-    object Products : BottomNavItem("Product", R.drawable.grocery_24px, "products")
-    object Settings : BottomNavItem("Ajustes", R.drawable.settings_24px, "settings")
+    object Products : BottomNavItem("Producto", R.drawable.grocery_24px, "products")
+    object Settings : BottomNavItem("Encargado", R.drawable.person_add_24px, "manager")
 }

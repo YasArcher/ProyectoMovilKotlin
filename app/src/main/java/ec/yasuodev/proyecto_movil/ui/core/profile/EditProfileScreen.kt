@@ -8,14 +8,23 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,6 +32,8 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -41,15 +52,34 @@ import kotlinx.coroutines.withContext
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EditProfileScreen(viewModel: EditProfileViewModel, navController: NavController, user: User) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Edit(Modifier.fillMaxSize(), viewModel, navController, user)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Editar Perfil",
+                        style = MaterialTheme.typography.titleLarge.copy(color = Color.White)
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
+        ) {
+            Edit(Modifier.fillMaxSize(), viewModel, navController, user)
+        }
     }
 }
 
@@ -64,8 +94,8 @@ fun Edit(
     val context = LocalContext.current
     val editState by viewModel.editState.observeAsState(initial = EditState.Loading)
     val name: String by viewModel.name.observeAsState(initial = user.name)
-    val lastName: String by viewModel.lastName.observeAsState(initial = user.lastName)
-    val nickName: String by viewModel.nickName.observeAsState(initial = user.nickName)
+    val lastName: String by viewModel.lastName.observeAsState(initial = user.lastname)
+    val nickName: String by viewModel.nickName.observeAsState(initial = user.nickname)
     val editEnable: Boolean by viewModel.editEnable.observeAsState(initial = false)
     val isLoading: Boolean by viewModel.isLoading.observeAsState(initial = false)
     val image: String by viewModel.image.observeAsState(initial = user.image)
@@ -87,10 +117,16 @@ fun Edit(
         LaunchedEffect(key1 = viewModel) {
             viewModel.id = user.id
         }
-        Column(modifier = modifier) {
+        Column(
+            modifier = modifier.padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
             ImageHeader(
                 modifier = Modifier
-                    .size(300.dp)
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
                     .align(Alignment.CenterHorizontally),
                 selectedImageUri = selectedImageUri,
                 image = viewModel.imageExist(image),
@@ -98,6 +134,13 @@ fun Edit(
                 viewModel.onEditChanged(name, lastName, nickName, selectedImageUri)
                 launcher.launch("image/*")
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = user.email,
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             DynamicField(
                 value = name,
                 onTextFieldChange = { newValue ->
@@ -110,12 +153,12 @@ fun Edit(
                 },
                 tipo = 2,
             )
-            Spacer(modifier = Modifier.padding(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             DynamicText(
                 message = viewModel.onEditMessageName(name),
                 state = viewModel.isValidName(name)
             )
-            Spacer(modifier = Modifier.padding(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             DynamicField(
                 value = lastName,
                 onTextFieldChange = { newValue ->
@@ -128,12 +171,12 @@ fun Edit(
                 },
                 tipo = 3,
             )
-            Spacer(modifier = Modifier.padding(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             DynamicText(
                 message = viewModel.onEditMessageLastName(lastName),
                 state = viewModel.isValidLastName(lastName)
             )
-            Spacer(modifier = Modifier.padding(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             DynamicField(
                 value = nickName,
                 onTextFieldChange = { newValue ->
@@ -146,12 +189,12 @@ fun Edit(
                 },
                 tipo = 4,
             )
-            Spacer(modifier = Modifier.padding(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             DynamicText(
                 message = viewModel.onEditMessageNickName(nickName),
                 state = viewModel.isValidNickName(nickName)
             )
-            Spacer(modifier = Modifier.padding(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             DynamicButton(type = 1, text = "Editar", enable = editEnable, method = {
                 coroutineScope.launch {
                     try {
@@ -202,27 +245,29 @@ fun Edit(
 
 @Composable
 fun ImageHeader(modifier: Modifier, selectedImageUri: Uri, image: String, onImageClick: () -> Unit) {
-    if (selectedImageUri != Uri.EMPTY) {
-        val painter = rememberAsyncImagePainter(selectedImageUri)
-        Image(
-            painter = painter,
-            contentDescription = "Header Image",
-            modifier = modifier.clickable { onImageClick() },
-        )
-    } else if (image != "noImage") {
-        val url = "https://vgnnieizrwmjemlnziaj.supabase.co/storage/v1/object/public/storeApp/users/$image.jpg"
-        val painter = rememberAsyncImagePainter(url)
-        Image(
-            painter = painter,
-            contentDescription = "Header Image",
-            modifier = modifier.clickable { onImageClick() },
-        )
-    } else {
-        Image(
-            painter = painterResource(id = R.drawable.user_id_svgrepo_com),
-            contentDescription = "Header Image",
-            modifier = modifier.clickable { onImageClick() }
-        )
+    Box(modifier = modifier.clickable { onImageClick() }, contentAlignment = Alignment.Center) {
+        if (selectedImageUri != Uri.EMPTY) {
+            val painter = rememberAsyncImagePainter(selectedImageUri)
+            Image(
+                painter = painter,
+                contentDescription = "Header Image",
+                modifier = Modifier.size(120.dp).clip(CircleShape)
+            )
+        } else if (image != "noImage") {
+            val url = "https://vgnnieizrwmjemlnziaj.supabase.co/storage/v1/object/public/storeApp/users/$image.jpg"
+            val painter = rememberAsyncImagePainter(url)
+            Image(
+                painter = painter,
+                contentDescription = "Header Image",
+                modifier = Modifier.size(120.dp).clip(CircleShape)
+            )
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.user_id_svgrepo_com),
+                contentDescription = "Header Image",
+                modifier = Modifier.size(120.dp).clip(CircleShape)
+            )
+        }
     }
 }
 

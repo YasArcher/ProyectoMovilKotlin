@@ -1,6 +1,5 @@
 package ec.yasuodev.proyecto_movil.ui.navigation
 
-import BottomNavigationBar
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
@@ -25,7 +24,8 @@ import ec.yasuodev.proyecto_movil.ui.core.business.BusinessScreen
 import ec.yasuodev.proyecto_movil.ui.core.business.BusinessViewModel
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeViewModel
-import ec.yasuodev.proyecto_movil.ui.core.home.SettingsScreen
+import ec.yasuodev.proyecto_movil.ui.core.manager.ManagerScreen
+import ec.yasuodev.proyecto_movil.ui.core.manager.ManagerViewModel
 import ec.yasuodev.proyecto_movil.ui.core.products.AddProductScreen
 import ec.yasuodev.proyecto_movil.ui.core.products.AddProductViewModel
 import ec.yasuodev.proyecto_movil.ui.core.products.EditProductScreen
@@ -36,6 +36,7 @@ import ec.yasuodev.proyecto_movil.ui.core.profile.EditProfileScreen
 import ec.yasuodev.proyecto_movil.ui.core.profile.EditProfileViewModel
 import ec.yasuodev.proyecto_movil.ui.core.profile.ProfileScreen
 import ec.yasuodev.proyecto_movil.ui.core.profile.ProfileViewModel
+import ec.yasuodev.proyecto_movil.ui.shared.components.BottomNavigationBar
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import ec.yasuodev.proyecto_movil.ui.shared.models.User
 
@@ -45,7 +46,7 @@ fun AppNavGraph() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val showBottomBar = currentRoute in listOf("home", "profile", "settings", "products")
+    val showBottomBar = currentRoute in listOf("home", "profile", "manager", "products")
     val context = LocalContext.current;
     Scaffold(
         bottomBar = {
@@ -74,8 +75,8 @@ fun AppNavGraph() {
             composable("profile") {
                 ProfileScreen(ProfileViewModel(), navController)
             }
-            composable("settings") {
-                SettingsScreen()
+            composable("manager") {
+                ManagerScreen(ManagerViewModel(), navController)
             }
             composable("editUser/{id}/{name}/{lastName}/{email}/{nickName}/{image}",
                 arguments = listOf(
@@ -112,14 +113,14 @@ fun AppNavGraph() {
                 navArgument("id") { type = NavType.StringType },
                 navArgument("name") { type = NavType.StringType },
                 navArgument("store") { type = NavType.StringType },
-                navArgument("price") { type = NavType.FloatType },
+                navArgument("price") { type = NavType.StringType },
                 navArgument("stock") { type = NavType.IntType }
             )) { backStackEntry ->
                 val product = Product(
                     backStackEntry.arguments?.getString("id") ?: "",
                     backStackEntry.arguments?.getString("name") ?: "",
                     backStackEntry.arguments?.getString("store") ?: "",
-                    backStackEntry.arguments?.getDouble("price") ?: 0.0,
+                    backStackEntry.arguments?.getString("price")?.toDouble() ?: 0.0,
                     backStackEntry.arguments?.getInt("stock") ?: 0
                 )
                 EditProductScreen(EditProductViewModel(), navController, product)

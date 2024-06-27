@@ -1,11 +1,13 @@
 package ec.yasuodev.proyecto_movil.ui.core.products
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,35 +16,67 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductsScreen(viewModel: ProductsViewModel, navController: NavController) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Products(Modifier.fillMaxSize(), viewModel, navController)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Mis Productos",
+                        style = MaterialTheme.typography.titleLarge.copy(color = Color.White)
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { addProduct(navController, viewModel.store.value?.id ?: "") }) {
+                Icon(Icons.Default.Add, contentDescription = "Agregar Producto")
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            ProductsContent(viewModel, navController)
+        }
     }
 }
 
 @Composable
-fun Products(modifier: Modifier, viewModel: ProductsViewModel, navController: NavController) {
+fun ProductsContent(viewModel: ProductsViewModel, navController: NavController) {
     val context = LocalContext.current
     val store: Store by viewModel.store.observeAsState(initial = Store("", "", "", ""))
     val products: List<Product> by viewModel.products.observeAsState(initial = emptyList())
@@ -53,35 +87,10 @@ fun Products(modifier: Modifier, viewModel: ProductsViewModel, navController: Na
         }
         viewModel.fetchStore(context)
     }
-    Column {
-        Row(Modifier.padding(bottom = 8.dp)) {
-            Column(
-                Modifier
-                    .weight(1f)
-                    .padding(top = 8.dp)
-            ) {
-                Text(text = "  Producto")
-            }
-            Column(
-                Modifier
-                    .weight(1f)
-                    .padding(top = 8.dp)
-            ) {
-                Text(text = "  Precio")
-            }
-            Column(
-                Modifier
-                    .weight(1f)
-                    .padding(top = 8.dp)
-            ) {
-                Text(text = "  Stock")
-            }
-            Column(Modifier.weight(1f)) {
-                IconButton(onClick = { addProduct(navController, store.id) }) {
-                    Icon(Icons.Default.Add, contentDescription = "add")
-                }
-            }
-        }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        HeaderRow()
+        Spacer(modifier = Modifier.height(8.dp))
         LazyColumn {
             items(products) { product ->
                 ProductCard(product = product, viewModel = viewModel, navController = navController)
@@ -91,32 +100,81 @@ fun Products(modifier: Modifier, viewModel: ProductsViewModel, navController: Na
 }
 
 @Composable
+fun HeaderRow() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = "Producto",
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.weight(1.3f)
+        )
+        Text(
+            text = "Precio",
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = "Stock",
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = "Acciones",
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
 fun ProductCard(product: Product, viewModel: ProductsViewModel, navController: NavController) {
-    Card(Modifier.padding(vertical = 8.dp, horizontal = 4.dp)) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(Modifier.weight(1.3f)) {
-                Spacer(modifier = Modifier.padding(4.dp))
-                Text(text = product.name)
+                Text(
+                    text = product.name,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+                )
             }
-            Column(Modifier.weight(1f)) {
-                Spacer(modifier = Modifier.padding(4.dp))
-                Text(text = " " + product.price.toString() + " $")
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "${product.price} $",
+                    style = MaterialTheme.typography.bodyLarge
+                )
             }
-            Column(Modifier.weight(1f)) {
-                Spacer(modifier = Modifier.padding(4.dp))
-                Text(text = "      " + product.stock.toString())
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = product.stock.toString(),
+                    style = MaterialTheme.typography.bodyLarge
+                )
             }
-            IconButton(
-                onClick = { product.id?.let { viewModel.deleteProduct(it) } },
-                modifier = Modifier
-            ) {
-                Icon(Icons.Default.Delete, contentDescription = "delete")
-            }
-            IconButton(onClick = { editProduct(product, navController) }, modifier = Modifier) {
-                Icon(Icons.Default.Edit, contentDescription = "edit")
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Row {
+                    IconButton(
+                        onClick = { product.id?.let { viewModel.deleteProduct(it) } },
+                        modifier = Modifier
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Eliminar")
+                    }
+                    IconButton(onClick = { editProduct(product, navController) }, modifier = Modifier) {
+                        Icon(Icons.Default.Edit, contentDescription = "Editar")
+                    }
+                }
             }
         }
     }

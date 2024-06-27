@@ -39,9 +39,9 @@ class ProfileViewModel() : ViewModel() {
                     columns = Columns.list(
                         "id",
                         "name",
-                        "lastName",
+                        "lastname",
                         "email",
-                        "nickName",
+                        "nickname",
                         "image"
                     )
                 ) {

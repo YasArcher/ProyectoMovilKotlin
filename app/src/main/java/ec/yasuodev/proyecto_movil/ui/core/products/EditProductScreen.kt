@@ -7,8 +7,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,6 +21,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -27,24 +33,41 @@ import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicText
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProductScreen(
     viewModel: EditProductViewModel,
     navController: NavController,
     product: Product
 ) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Edit(Modifier.fillMaxSize(), viewModel, navController, product)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Editar Producto",
+                        style = MaterialTheme.typography.titleLarge.copy(color = Color.White)
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            EditContent(viewModel, navController, product)
+        }
     }
 }
 
 @Composable
-fun Edit(
-    modifier: Modifier,
+fun EditContent(
     viewModel: EditProductViewModel,
     navController: NavController,
     product: Product
@@ -69,12 +92,12 @@ fun Edit(
         }
     } else {
         Surface(
-            modifier = modifier,
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             color = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.onBackground
         ) {
             Column(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.fillMaxSize().padding(16.dp)
             ) {
                 DynamicField(
                     value = name,
@@ -127,7 +150,7 @@ fun Edit(
                     state = viewModel.isValidStock(stock)
                 )
                 Spacer(modifier = Modifier.padding(16.dp))
-                DynamicButton(type = 1, text = "Editar", enable = editEnable,{
+                DynamicButton(type = 1, text = "Editar", enable = editEnable, {
                     coroutineScope.launch {
                         viewModel.updateProduct().apply {
                             Toast.makeText(context, "Actualizando producto", Toast.LENGTH_SHORT).show()

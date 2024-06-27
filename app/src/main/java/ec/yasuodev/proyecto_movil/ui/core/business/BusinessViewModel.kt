@@ -239,21 +239,40 @@ class BusinessViewModel(private val context: Context) : ViewModel() {
     fun deleteSaleProduct(saleId: String) {
         viewModelScope.launch {
             try {
+
+                val saleToDelete = _salesList.value?.find { it.id == saleId }
+
                 SupabaseClient.client.from("sales").delete {
                     filter {
                         eq("id", saleId)
                     }
                 }
+
+                saleToDelete?.let { sale ->
+                    val product = _products.value?.find { it.id == sale.product }
+                    product?.let {
+                        val updatedProduct = it.copy(stock = it.stock + sale.quantity)
+                        SupabaseClient.client.from("products").update(updatedProduct) {
+                            filter {
+                                eq("id", it.id)
+                            }
+                        }
+
+                        val updatedProducts = _products.value?.map { p ->
+                            if (p.id == it.id) updatedProduct else p
+                        }
+                        _products.value = updatedProducts!!
+                    }
+                }
+
                 val updatedSalesList = _salesList.value?.toMutableList() ?: mutableListOf()
                 updatedSalesList.removeAll { it.id == saleId }
                 _salesList.value = updatedSalesList
 
-                // Recalcular ingresos
                 val newIncome = updatedSalesList.sumOf { it.total }
                 _income.value = newIncome
 
                 makeAuxiliarSaleProduct()
-                resetAddState()
                 _addState.value = AddState.Success("Venta eliminada")
             } catch (e: Exception) {
                 _addState.value = AddState.Error("Error al eliminar venta")
@@ -262,8 +281,6 @@ class BusinessViewModel(private val context: Context) : ViewModel() {
             }
         }
     }
-
-
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun updateSaleProduct(sale: Sale) {
@@ -300,7 +317,6 @@ class BusinessViewModel(private val context: Context) : ViewModel() {
                 updatedSalesList[index] = sale
                 _salesList.value = updatedSalesList
 
-                // Actualizar ingresos
                 _income.value = (_income.value ?: 0.0) + totalDifference
 
                 makeAuxiliarSaleProduct()
@@ -312,6 +328,7 @@ class BusinessViewModel(private val context: Context) : ViewModel() {
             }
         }
     }
+
 
     private fun getSalesByDate(store_id: String, date: String) {
         viewModelScope.launch {
