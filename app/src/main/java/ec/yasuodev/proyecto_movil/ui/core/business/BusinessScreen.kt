@@ -1,6 +1,7 @@
 package ec.yasuodev.proyecto_movil.ui.core.business
 
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -52,6 +53,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import ec.yasuodev.proyecto_movil.ui.core.models.AddState
 import ec.yasuodev.proyecto_movil.ui.shared.models.AuxiliarSaleProduct
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
@@ -63,13 +65,18 @@ enum class TransactionType {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun BusinessScreen(viewModel: BusinessViewModel, navController: NavController, store: String) {
+fun BusinessScreen(
+    viewModel: BusinessViewModel,
+    navController: NavController,
+    store: String,
+    seller: String
+) {
     Box(
         Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        BusinessContent(viewModel, navController, Modifier, store)
+        BusinessContent(viewModel, navController, Modifier, store, seller)
     }
 }
 
@@ -79,21 +86,18 @@ fun BusinessContent(
     viewModel: BusinessViewModel,
     navController: NavController,
     modifier: Modifier,
-    storeID: String
+    storeID: String,
+    seller: String
 ) {
-    val context = LocalContext.current
     val store by viewModel.store.observeAsState(Store("", "", "", ""))
-    val products by viewModel.products.observeAsState(emptyList())
     val showDialog by viewModel.showDialog.observeAsState(false)
     var expanded by remember { mutableStateOf(false) }
     var transactionType by remember { mutableStateOf(TransactionType.SALE) }
 
     LaunchedEffect(key1 = viewModel) {
-        val stid = "126b4bc6-bdea-4542-a3c8-0d75ed75d887"
         val dateToday = java.time.LocalDate.now().toString()
-        viewModel.fetchBusiness(stid)
-        viewModel.getSalesByDate(stid, dateToday)
-        viewModel.getExpendituresByDate(stid, dateToday)
+        viewModel.fetchBusiness(storeID)
+        viewModel.getExpendituresByDate(storeID, dateToday)
     }
 
     Box(modifier.fillMaxSize()) {
@@ -174,16 +178,19 @@ fun BusinessContent(
                     onDismiss = { viewModel.showDialog(false) },
                     onProductSelected = { product, quantity ->
                         viewModel.showDialog(false)
-                    }
+                    },
+                    seller
                 )
             }
+
             TransactionType.PURCHASE -> {
                 PurchaseDialog(
                     viewModel = viewModel,
                     onDismiss = { viewModel.showDialog(false) },
                     onPurchaseAdded = { reason, amount ->
                         viewModel.showDialog(false)
-                    }
+                    },
+                    storeID
                 )
             }
         }
@@ -229,8 +236,8 @@ fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem("Ingresos", income, Color(0xFF388E3C))  // Verde para ingresos
-                    StatItem("Egresos", expenditures, Color.Red)     // Rojo para egresos
+                    StatItem("Ingresos", income, Color(0xFF388E3C))
+                    StatItem("Egresos", expenditures, Color.Red)
                 }
             }
         }
@@ -316,18 +323,21 @@ fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProductSelectionDialog(
     viewModel: BusinessViewModel,
     onDismiss: () -> Unit,
-    onProductSelected: (product: Product, quantity: Int) -> Unit
+    onProductSelected: (product: Product, quantity: Int) -> Unit,
+    seller: String
 ) {
     val coroutineScope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
     val filteredProducts by viewModel.filteredProducts.observeAsState(emptyList())
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var quantity by remember { mutableIntStateOf(1) }
-
+    val context = LocalContext.current
+    val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
     LaunchedEffect(searchQuery) {
         viewModel.filterProducts(searchQuery)
     }
@@ -374,7 +384,34 @@ fun ProductSelectionDialog(
                             selectedProduct?.let {
                                 onProductSelected(it, quantity)
                                 coroutineScope.launch {
-                                    viewModel.addSaleProduct(it, quantity)
+                                    viewModel.addSaleProduct(it, quantity, seller).apply {
+                                        Toast.makeText(
+                                            context,
+                                            "Agregando Venta",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    viewModel.onAddSelected().apply {
+                                        when (addState) {
+                                            is AddState.Success -> {
+                                                Toast.makeText(
+                                                    context,
+                                                    (addState as AddState.Success).message,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+
+                                            is AddState.Error -> {
+                                                Toast.makeText(
+                                                    context,
+                                                    (addState as AddState.Error).message,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+
+                                            else -> Unit
+                                        }
+                                    }
                                 }
                             }
                         },
@@ -390,15 +427,19 @@ fun ProductSelectionDialog(
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PurchaseDialog(
     viewModel: BusinessViewModel,
     onDismiss: () -> Unit,
-    onPurchaseAdded: (reason: String, amount: Double) -> Unit
+    onPurchaseAdded: (reason: String, amount: Double) -> Unit,
+    store: String
 ) {
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var reason by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
+    val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
 
     AlertDialog(
         onDismissRequest = { onDismiss() },
@@ -441,7 +482,34 @@ fun PurchaseDialog(
                             if (reason.isNotBlank() && amount.isNotBlank()) {
                                 onPurchaseAdded(reason, amount.toDouble())
                                 coroutineScope.launch {
-                                    //viewModel.addPurchase(reason, amount.toDouble())
+                                    viewModel.addPurchase(amount.toDouble(), reason, store).apply {
+                                        Toast.makeText(
+                                            context,
+                                            "Agregando Egreso",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    viewModel.onAddSelected().apply {
+                                        when (addState) {
+                                            is AddState.Success -> {
+                                                Toast.makeText(
+                                                    context,
+                                                    (addState as AddState.Success).message,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+
+                                            is AddState.Error -> {
+                                                Toast.makeText(
+                                                    context,
+                                                    (addState as AddState.Error).message,
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+
+                                            else -> Unit
+                                        }
+                                    }
                                 }
                             }
                         },

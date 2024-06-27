@@ -8,6 +8,5 @@ data class Purchase(
     val reason: String,
     val created_at: String,
     val business_id: String,
-    val amount: Double,
-    val document_image: String
+    val amount: Double
 )

@@ -30,6 +30,7 @@ class ProductsViewModel: ViewModel() {
                         "id",
                         "name",
                         "owner",
+                        "business_image"
                     )
                 ) {
                     filter {

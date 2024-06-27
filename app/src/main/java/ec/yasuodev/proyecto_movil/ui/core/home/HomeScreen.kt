@@ -10,12 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.Text
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,28 +59,28 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            HomeContent(viewModel, navController)
+            HomeContent(viewModel, navController, user)
         }
     }
 }
 
 @Composable
-fun HomeContent(viewModel: HomeViewModel, navController: NavController) {
+fun HomeContent(viewModel: HomeViewModel, navController: NavController, user: User) {
     val store by viewModel.store.observeAsState(Store("", "", "", ""))
     Column(modifier = Modifier.fillMaxSize()) {
-        DefaultCard(store, navController)
+        DefaultCard(store, navController, user)
     }
 }
 
 @Composable
-fun DefaultCard(store: Store, navController: NavController) {
+fun DefaultCard(store: Store, navController: NavController, user: User) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .padding(vertical = 8.dp)
             .clickable {
-                navController.navigate("business/${store.id}")
+                navController.navigate("business/${store.id}/${user.id}")
             },
         contentAlignment = Alignment.Center
     ) {
@@ -141,34 +141,4 @@ fun DefaultCard(store: Store, navController: NavController) {
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ProfileScreen() {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = "Cuenta")
-                },
-            )
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            ProfileContent()
-        }
-    }
-}
-
-fun ProfileContent() {
-
-}
-
-@Composable
-fun SettingsScreen() {
 }

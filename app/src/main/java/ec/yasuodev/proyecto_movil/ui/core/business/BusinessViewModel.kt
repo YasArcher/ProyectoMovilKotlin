@@ -1,5 +1,7 @@
 package ec.yasuodev.proyecto_movil.ui.core.business
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -10,12 +12,16 @@ import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import ec.yasuodev.proyecto_movil.ui.shared.models.Purchase
 import ec.yasuodev.proyecto_movil.ui.shared.models.Sale
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
+import ec.yasuodev.proyecto_movil.ui.shared.models.generateUUID
 import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class BusinessViewModel: ViewModel() {
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
     private val _store = MutableLiveData<Store>()
     val store: LiveData<Store> = _store
     private val _income = MutableLiveData<Double>(0.0)
@@ -36,10 +42,6 @@ class BusinessViewModel: ViewModel() {
     val filteredProducts: LiveData<List<Product>> = _filteredProducts
     private val _addState = MutableLiveData<AddState>()
     val addState: LiveData<AddState> = _addState
-    private val _showDialogSale = MutableLiveData<Boolean>()
-    val showDialogSale: LiveData<Boolean> = _showDialogSale
-    private val _showDialogPurchase = MutableLiveData<Boolean>()
-    val showDialogPurchase: LiveData<Boolean> = _showDialogPurchase
 
     fun filterProducts(query: String) {
         val products = _products.value ?: return
@@ -52,13 +54,8 @@ class BusinessViewModel: ViewModel() {
     fun showDialog(show: Boolean) {
         _showDialog.value = show
     }
-    fun showDialogSale(show: Boolean) {
-        _showDialogSale.value = show
-    }
-    fun showDialogPurchase(show: Boolean) {
-        _showDialogPurchase.value = show
-    }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun fetchBusiness(id: String ) {
         viewModelScope.launch {
             try {
@@ -81,7 +78,12 @@ class BusinessViewModel: ViewModel() {
         }
         fetchProducts(id)
     }
-
+    suspend fun onAddSelected() {
+        _isLoading.value = true
+        delay(4000)
+        _isLoading.value = false
+    }
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun fetchProducts(store_id: String){
         viewModelScope.launch {
             try {
@@ -99,25 +101,67 @@ class BusinessViewModel: ViewModel() {
                     }
                 }.decodeList<Product>()
                 _products.value = response
-                makeAuxiliarSaleProduct()
+                getSalesByDate(store_id, java.time.LocalDate.now().toString())
             } catch (e: Exception) {
                 println(e)
             }
         }
     }
 
-    fun addSaleProduct(product: Product, quantity: Int){
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun addSaleProduct(product: Product, quantity: Int, seled_by: String){
         viewModelScope.launch {
+            val date = java.time.LocalDate.now().toString()
             try {
-
-
+                val sale = Sale(
+                    id = generateUUID(),
+                    created_at = date ,
+                    total = (product.price * quantity).toDouble(),
+                    product = product.id,
+                    quantity = quantity,
+                    id_business = product.store,
+                    seled_by = seled_by
+                )
+                SupabaseClient.client.from("sales").insert(
+                    sale
+                )
+                val updatedSalesList = _salesList.value?.toMutableList() ?: mutableListOf()
+                updatedSalesList.add(sale)
+                _salesList.value = updatedSalesList
+                makeAuxiliarSaleProduct()
+                _addState.value = AddState.Success("Producto vendido")
             }catch (e: Exception){
-                println(e)
+                _addState.value = AddState.Error("Error al vender producto")
             }
         }
     }
 
-    fun getSalesByDate(store_id: String, date: String){
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun addPurchase(amount: Double, reason: String, store_id: String){
+        viewModelScope.launch {
+            try {
+                val purchase = Purchase(
+                    id = generateUUID(),
+                    created_at = java.time.LocalDate.now().toString(),
+                    business_id = store_id,
+                    amount = amount,
+                    reason = reason
+                )
+                SupabaseClient.client.from("purchases").insert(
+                    purchase
+                )
+                val updatedPurchasesList = _purchasesList.value?.toMutableList() ?: mutableListOf()
+                updatedPurchasesList.add(purchase)
+                _purchasesList.value = updatedPurchasesList
+                _addState.value = AddState.Success("Gasto registrado")
+                getExpendituresByDate(store_id, java.time.LocalDate.now().toString())
+            }catch (e: Exception){
+                _addState.value = AddState.Error("Error al registrar gasto")
+            }
+        }
+    }
+
+    private fun getSalesByDate(store_id: String, date: String){
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("sales").select(
@@ -145,6 +189,7 @@ class BusinessViewModel: ViewModel() {
                 }
                 _salesList.value = salesList
                 _income.value = totalIncome
+                makeAuxiliarSaleProduct()
             } catch (e: Exception) {
                 println(e)
             }
@@ -160,8 +205,7 @@ class BusinessViewModel: ViewModel() {
                         "created_at",
                         "business_id",
                         "amount",
-                        "reason",
-                        "document_image"
+                        "reason"
                     )
                 ) {
                     filter {

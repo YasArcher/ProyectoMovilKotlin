@@ -55,7 +55,7 @@ fun AppNavGraph() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "business/126b4bc6-bdea-4542-a3c8-0d75ed75d887",
+            startDestination = "home",
             Modifier.padding(innerPadding)
         ) {
             composable("login") {
@@ -123,13 +123,15 @@ fun AppNavGraph() {
                 )
                 EditProductScreen(EditProductViewModel(), navController, product)
             }
-            composable("business/{store}", arguments = listOf(
-                navArgument("store") { type = NavType.StringType }
+            composable("business/{store}/{seller}", arguments = listOf(
+                navArgument("store") { type = NavType.StringType },
+                navArgument("seller") { type = NavType.StringType }
             )) { backStackEntry ->
                 BusinessScreen(
                     BusinessViewModel(),
                     navController,
-                    backStackEntry.arguments?.getString("store") ?: ""
+                    backStackEntry.arguments?.getString("store") ?: "",
+                    backStackEntry.arguments?.getString("seller") ?: ""
                 )
             }
         }
