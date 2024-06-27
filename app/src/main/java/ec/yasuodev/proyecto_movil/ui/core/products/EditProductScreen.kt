@@ -119,7 +119,7 @@ fun Edit(
                 state = viewModel.isValidStock(stock)
             )
             Spacer(modifier = Modifier.padding(8.dp))
-            DynamicButton(type = 1, text = "Editar", enable = editEnable) {
+            DynamicButton(type = 1, text = "Editar", enable = editEnable, method ={
                 coroutineScope.launch {
                     viewModel.updateProduct().apply {
                         Toast.makeText(context, "Actualizando producto", Toast.LENGTH_SHORT).show()
@@ -146,7 +146,7 @@ fun Edit(
                         }
                     }
                 }
-            }
+            })
         }
     }
 }

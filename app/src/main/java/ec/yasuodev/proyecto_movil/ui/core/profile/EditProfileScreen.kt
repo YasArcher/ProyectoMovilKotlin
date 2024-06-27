@@ -154,7 +154,7 @@ fun Edit(
                 state = viewModel.isValidNickName(nickName)
             )
             Spacer(modifier = Modifier.padding(16.dp))
-            DynamicButton(type = 1, text = "Editar", enable = editEnable) {
+            DynamicButton(type = 1, text = "Editar", enable = editEnable, method ={
                 coroutineScope.launch {
                     try {
                         viewModel.updateUser(
@@ -197,7 +197,7 @@ fun Edit(
                         ).show()
                     }
                 }
-            }
+            })
         }
     }
 }

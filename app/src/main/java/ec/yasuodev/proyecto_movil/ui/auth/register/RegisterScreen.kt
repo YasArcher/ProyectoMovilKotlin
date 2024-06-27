@@ -114,7 +114,7 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
             )
             Spacer(modifier = Modifier.padding(4.dp))
             /*Register Button*/
-            DynamicButton(1, "Registrame", registerEnable) {
+            DynamicButton(1, "Registrame", registerEnable, method = {
                 coroutineScope.launch {
                     val register = viewModel.signUp(context, email, password).apply {
                         Toast.makeText(context, "Registrando usuario", Toast.LENGTH_SHORT).show()
@@ -136,7 +136,7 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
                         }
                     }
                 }
-            }
+            })
         }
     }
 }

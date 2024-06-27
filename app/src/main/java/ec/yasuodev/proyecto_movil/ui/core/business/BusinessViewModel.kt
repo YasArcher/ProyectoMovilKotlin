@@ -1,11 +1,20 @@
 package ec.yasuodev.proyecto_movil.ui.core.business
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ec.yasuodev.proyecto_movil.R
 import ec.yasuodev.proyecto_movil.ui.core.models.AddState
 import ec.yasuodev.proyecto_movil.ui.shared.models.AuxiliarSaleProduct
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
@@ -19,7 +28,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class BusinessViewModel : ViewModel() {
+class BusinessViewModel(private val context: Context) : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
     private val _store = MutableLiveData<Store>()
@@ -42,6 +51,41 @@ class BusinessViewModel : ViewModel() {
     val filteredProducts: LiveData<List<Product>> = _filteredProducts
     private val _addState = MutableLiveData<AddState>()
     val addState: LiveData<AddState> = _addState
+
+    private fun showLowStockNotification(productName: String) {
+        val channelId = "low_stock_channel"
+        val channelName = "Low Stock Alerts"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(channelId, channelName, importance)
+            val notificationManager: NotificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.visibility_24px)
+            .setContentTitle("Stock bajo")
+            .setContentText("El stock del producto $productName es de 10 o menos.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        NotificationManagerCompat.from(context).notify(1, notification)
+    }
 
     fun filterProducts(query: String) {
         val products = _products.value ?: return
@@ -78,6 +122,7 @@ class BusinessViewModel : ViewModel() {
             }
         }
         fetchProducts(id)
+        getSalesByDate(id, java.time.LocalDate.now().toString())
     }
 
     suspend fun onAddSelected() {
@@ -127,7 +172,6 @@ class BusinessViewModel : ViewModel() {
                 )
                 SupabaseClient.client.from("sales").insert(sale)
 
-                // Update product stock
                 val newStock = product.stock - quantity
                 val updatedProduct = product.copy(stock = newStock)
                 SupabaseClient.client.from("products").update(updatedProduct) {
@@ -136,7 +180,10 @@ class BusinessViewModel : ViewModel() {
                     }
                 }
 
-                // Update local state
+                if (newStock <= 10) {
+                    showLowStockNotification(product.name)
+                }
+
                 val updatedSalesList = _salesList.value?.toMutableList() ?: mutableListOf()
                 updatedSalesList.add(sale)
                 _salesList.value = updatedSalesList
@@ -145,6 +192,9 @@ class BusinessViewModel : ViewModel() {
                     if (it.id == product.id) updatedProduct else it
                 }
                 _products.value = updatedProducts!!
+
+                // Actualizar ingresos
+                _income.value = (_income.value ?: 0.0) + sale.total
 
                 makeAuxiliarSaleProduct()
                 _addState.value = AddState.Success("Producto vendido")
@@ -173,8 +223,11 @@ class BusinessViewModel : ViewModel() {
                 val updatedPurchasesList = _purchasesList.value?.toMutableList() ?: mutableListOf()
                 updatedPurchasesList.add(purchase)
                 _purchasesList.value = updatedPurchasesList
+
+                // Actualizar egresos
+                _expenditures.value = (_expenditures.value ?: 0.0) + amount
+
                 _addState.value = AddState.Success("Gasto registrado")
-                getExpendituresByDate(store_id, java.time.LocalDate.now().toString())
             } catch (e: Exception) {
                 _addState.value = AddState.Error("Error al registrar gasto")
             } finally {
@@ -183,17 +236,22 @@ class BusinessViewModel : ViewModel() {
         }
     }
 
-    fun deleteSaleProduct(sale: String) {
+    fun deleteSaleProduct(saleId: String) {
         viewModelScope.launch {
             try {
                 SupabaseClient.client.from("sales").delete {
                     filter {
-                        eq("id", sale)
+                        eq("id", saleId)
                     }
                 }
                 val updatedSalesList = _salesList.value?.toMutableList() ?: mutableListOf()
-                updatedSalesList.remove(updatedSalesList.find { it.id == sale })
+                updatedSalesList.removeAll { it.id == saleId }
                 _salesList.value = updatedSalesList
+
+                // Recalcular ingresos
+                val newIncome = updatedSalesList.sumOf { it.total }
+                _income.value = newIncome
+
                 makeAuxiliarSaleProduct()
                 resetAddState()
                 _addState.value = AddState.Success("Venta eliminada")
@@ -205,12 +263,15 @@ class BusinessViewModel : ViewModel() {
         }
     }
 
+
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun updateSaleProduct(sale: Sale) {
         viewModelScope.launch {
             try {
                 val originalSale = _salesList.value?.find { it.id == sale.id }
                 val difference = sale.quantity - (originalSale?.quantity ?: 0)
+                val totalDifference = (sale.total - (originalSale?.total ?: 0.0))
 
                 SupabaseClient.client.from("sales").update(sale) {
                     filter {
@@ -238,6 +299,9 @@ class BusinessViewModel : ViewModel() {
                 val index = updatedSalesList.indexOfFirst { it.id == sale.id }
                 updatedSalesList[index] = sale
                 _salesList.value = updatedSalesList
+
+                // Actualizar ingresos
+                _income.value = (_income.value ?: 0.0) + totalDifference
 
                 makeAuxiliarSaleProduct()
                 _addState.value = AddState.Success("Venta actualizada")
@@ -341,6 +405,61 @@ class BusinessViewModel : ViewModel() {
             }
         }
         _productsModel.value = auxiliarSaleProductList
+    }
+
+    fun updatePurchase(purchase: Purchase) {
+        viewModelScope.launch {
+            try {
+                val originalPurchase = _purchasesList.value?.find { it.id == purchase.id }
+                val difference = purchase.amount - (originalPurchase?.amount ?: 0.0)
+
+                SupabaseClient.client.from("purchases").update(purchase) {
+                    filter {
+                        eq("id", purchase.id)
+                    }
+                }
+                val updatedPurchasesList = _purchasesList.value?.toMutableList() ?: mutableListOf()
+                val index = updatedPurchasesList.indexOfFirst { it.id == purchase.id }
+                if (index != -1) {
+                    updatedPurchasesList[index] = purchase
+                    _purchasesList.value = updatedPurchasesList
+                }
+
+                // Actualizar egresos
+                _expenditures.value = (_expenditures.value ?: 0.0) + difference
+
+                _addState.value = AddState.Success("Egreso actualizado")
+            } catch (e: Exception) {
+                _addState.value = AddState.Error("Error al actualizar egreso")
+            } finally {
+                resetAddState()
+            }
+        }
+    }
+
+    fun deletePurchase(purchaseId: String) {
+        viewModelScope.launch {
+            try {
+                SupabaseClient.client.from("purchases").delete {
+                    filter {
+                        eq("id", purchaseId)
+                    }
+                }
+                val updatedPurchasesList = _purchasesList.value?.toMutableList() ?: mutableListOf()
+                updatedPurchasesList.removeAll { it.id == purchaseId }
+                _purchasesList.value = updatedPurchasesList
+
+                // Recalcular egresos
+                val newExpenditures = updatedPurchasesList.sumOf { it.amount }
+                _expenditures.value = newExpenditures
+
+                _addState.value = AddState.Success("Egreso eliminado")
+            } catch (e: Exception) {
+                _addState.value = AddState.Error("Error al eliminar egreso")
+            } finally {
+                resetAddState()
+            }
+        }
     }
 
     private fun resetAddState() {

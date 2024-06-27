@@ -114,7 +114,7 @@ fun Add(
                 state = viewModel.isValidStock(stock)
             )
             Spacer(modifier = Modifier.padding(16.dp))
-            DynamicButton(type = 1, text = "Agregar", enable = editEnable) {
+            DynamicButton(type = 1, text = "Agregar", enable = editEnable, method ={
                 coroutineScope.launch {
                     viewModel.addProduct().apply {
                         Toast.makeText(context, "Agregando Producto", Toast.LENGTH_SHORT).show()
@@ -142,7 +142,7 @@ fun Add(
                         }
                     }
                 }
-            }
+            })
         }
     }
 }

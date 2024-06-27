@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -53,11 +54,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import ec.yasuodev.proyecto_movil.ui.core.models.AddState
 import ec.yasuodev.proyecto_movil.ui.shared.models.AuxiliarSaleProduct
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
+import ec.yasuodev.proyecto_movil.ui.shared.models.Purchase
 import ec.yasuodev.proyecto_movil.ui.shared.models.Sale
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import kotlinx.coroutines.launch
@@ -112,33 +115,67 @@ fun BusinessContent(
             )
             StatsCard(modifier, viewModel)
             Spacer(modifier = Modifier.padding(10.dp))
-            Column(modifier) {
-                Text(text = "Productos vendidos hoy", style = MaterialTheme.typography.titleSmall)
-                Spacer(modifier = Modifier.padding(10.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp)
-                ) {
-                    Text(
-                        text = "Producto",
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.weight(1.3f)
-                    )
-                    Text(
-                        text = "Cantidad",
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.weight(1.4f)
-                    )
-                    Text(
-                        text = "Total",
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.weight(1f)
-                    )
+            Column(modifier.fillMaxSize()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = "Productos vendidos hoy", style = MaterialTheme.typography.titleSmall)
+                    Spacer(modifier = Modifier.padding(10.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp)
+                    ) {
+                        Text(
+                            text = "Producto",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1.3f)
+                        )
+                        Text(
+                            text = "Cantidad",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1.4f)
+                        )
+                        Text(
+                            text = "Total",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1.3f)
+                        )
+                        Text(
+                            text = "Acciones",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1.5f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.padding(5.dp))
+                    SalesList(viewModel = viewModel, modifier = modifier)
                 }
                 Spacer(modifier = Modifier.padding(10.dp))
-                SalesList(viewModel = viewModel, modifier = modifier)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = "Egresos del día", style = MaterialTheme.typography.titleSmall)
+                    Spacer(modifier = Modifier.padding(10.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp)
+                    ) {
+                        Text(
+                            text = "Razon",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1.3f)
+                        )
+                        Text(
+                            text = "Valor",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1.4f)
+                        )
+                        Text(
+                            text = "Acciones",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Spacer(modifier = Modifier.padding(5.dp))
+                    PurchasesList(viewModel = viewModel, modifier = modifier)
+                }
             }
         }
         Box(
@@ -515,7 +552,10 @@ fun PurchaseDialog(
                     label = { Text("Cantidad") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyLarge
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Number
+                    )
                 )
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
                 Row(
@@ -651,7 +691,7 @@ fun EditSaleDialog(
                 QuantitySelector(
                     quantity,
                     onQuantityChange = { quantity = it },
-                    maxQuantity = sale.productStock + sale.quantity // sumamos la cantidad actual a la del stock
+                    maxQuantity = sale.productStock + sale.quantity
                 )
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
             }
@@ -729,5 +769,199 @@ private fun AuxiliarSaleProduct.toSale(): Sale {
         quantity = this.quantity,
         id_business = this.id_business,
         seled_by = this.seled_by
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun PurchasesList(
+    viewModel: BusinessViewModel,
+    modifier: Modifier,
+) {
+    val purchasesList by viewModel.purchasesList.observeAsState(emptyList())
+    ElevatedCard(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        LazyColumn {
+            items(purchasesList) { purchase ->
+                PurchaseCard(purchase, viewModel = viewModel)
+            }
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun PurchaseCard(purchase: Purchase, viewModel: BusinessViewModel) {
+    var showEditDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    if (showEditDialog) {
+        EditPurchaseDialog(
+            viewModel = viewModel,
+            purchase = purchase,
+            onDismiss = { showEditDialog = false }
+        )
+    }
+
+    Card(
+        modifier = Modifier
+            .padding(vertical = 8.dp, horizontal = 16.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = purchase.reason,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1.5f)
+            )
+            Text(
+                text = "${purchase.amount.format(2)}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = {
+                    coroutineScope.launch {
+                        viewModel.deletePurchase(purchase.id).apply {
+                            Toast.makeText(
+                                context,
+                                "Eliminando Egreso",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                    viewModel.deletePurchase(purchase.id)
+                }
+            ) {
+                Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
+            }
+            IconButton(
+                onClick = {
+                    showEditDialog = true
+                }
+            ) {
+                Icon(Icons.Filled.Edit, contentDescription = "Editar")
+            }
+        }
+    }
+}
+
+@Composable
+fun EditPurchaseDialog(
+    viewModel: BusinessViewModel,
+    purchase: Purchase,
+    onDismiss: () -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+    var reason by remember { mutableStateOf(purchase.reason) }
+    var amount by remember { mutableStateOf(purchase.amount.toString()) }
+    val context = LocalContext.current
+    val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
+
+    LaunchedEffect(addState) {
+        if (addState is AddState.Success) {
+            onDismiss()
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text("Editar Egreso", style = MaterialTheme.typography.titleMedium) },
+        text = {
+            Column {
+                TextField(
+                    value = reason,
+                    onValueChange = { reason = it },
+                    label = { Text("Razón") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    label = { Text("Cantidad") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Number
+                    )
+                )
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+            }
+        },
+        confirmButton = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    onClick = { onDismiss() },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Cancelar", color = Color.White)
+                }
+                Spacer(Modifier.width(16.dp))
+                Button(
+                    onClick = {
+                        if (reason.isNotBlank() && amount.isNotBlank()) {
+                            val updatedPurchase = purchase.copy(
+                                reason = reason,
+                                amount = amount.toDouble()
+                            )
+                            coroutineScope.launch {
+                                viewModel.updatePurchase(updatedPurchase).apply {
+                                    Toast.makeText(
+                                        context,
+                                        "Actualizando Egreso",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                                viewModel.onAddSelected().apply {
+                                    when (addState) {
+                                        is AddState.Success -> {
+                                            Toast.makeText(
+                                                context,
+                                                (addState as AddState.Success).message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+
+                                        is AddState.Error -> {
+                                            Toast.makeText(
+                                                context,
+                                                (addState as AddState.Error).message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+
+                                        else -> Unit
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("Actualizar", color = Color.White)
+                }
+            }
+        },
+        dismissButton = {}
     )
 }

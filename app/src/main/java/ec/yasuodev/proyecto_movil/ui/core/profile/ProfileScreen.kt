@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -120,11 +120,11 @@ fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavC
             overflow = TextOverflow.Ellipsis
         )
         Spacer(modifier = Modifier.weight(1f))
-        DynamicButton(type = 2, text = "Editar", enable = true) {
+        DynamicButton(type = 2, text = "Editar", enable = true,{
             navController.navigate("editUser/${user.id}/${user.name}/${user.name}/${user.email}/${user.nickName}/${user.image}")
-        }
+        })
         Spacer(modifier = Modifier.padding(8.dp))
-        DynamicButton(type = 3, text = "Cerrar Sesión", enable = true) {
+        DynamicButton(type = 3, text = "Cerrar Sesión", enable = true, {
             coroutineScope.launch {
                 viewModel.signOut(context).apply {
                     Toast.makeText(context, "Cerrando sesion", Toast.LENGTH_SHORT).show()
@@ -152,7 +152,7 @@ fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavC
                     }
                 }
             }
-        }
+        })
         Spacer(modifier = Modifier.padding(8.dp))
     }
 }

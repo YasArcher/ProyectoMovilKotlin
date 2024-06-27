@@ -64,7 +64,7 @@ fun Reset(modifier: Modifier, viewModel: ResetViewModel, navController: NavContr
             )
             Spacer(modifier = Modifier.padding(8.dp))
             /*Reset Button*/
-            DynamicButton(1, "Enviar", resetEnable) {
+            DynamicButton(1, "Enviar", resetEnable, {
                 coroutineScope.launch {
                     viewModel.forgotPassword(email).apply {
                         Toast.makeText(context, "Enviando correo", Toast.LENGTH_SHORT).show()
@@ -92,7 +92,7 @@ fun Reset(modifier: Modifier, viewModel: ResetViewModel, navController: NavContr
                         }
                     }
                 }
-            }
+            })
         }
     }
 }

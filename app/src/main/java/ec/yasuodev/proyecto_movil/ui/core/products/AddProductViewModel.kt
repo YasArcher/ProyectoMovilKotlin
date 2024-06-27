@@ -76,7 +76,7 @@ class AddProductViewModel : ViewModel() {
                 id = generateUUID(),
                 name = name.value!!,
                 store = store,
-                price = price.value!!.toFloat(),
+                price = price.value!!.toDouble(),
                 stock = stock.value!!.toInt()
             )
             try {

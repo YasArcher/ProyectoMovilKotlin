@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,7 +56,7 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(key1 = viewModel) {
-        if (TokenManager.getToken(context) !=null) {
+        if (TokenManager.getToken(context) != null) {
             navController.navigate("home")
         }
     }
@@ -106,44 +106,54 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
             ForgotPassword(Modifier.align(Alignment.End), navController)
             Spacer(modifier = Modifier.padding(8.dp))
             /*Login Button*/
-            DynamicButton(1, "Iniciar Sesión", loginEnable) {
-                coroutineScope.launch {
-                    viewModel.signIn(context, email, password).apply {
-                        Toast.makeText(context, "Iniciando sesión", Toast.LENGTH_SHORT).show()
-                    }
-                    viewModel.onLoginSelected().apply {
-                        when (userState) {
-                            is UserState.Success -> {
-                                Toast.makeText(
-                                    context,
-                                    (userState as UserState.Success).message,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                navController.navigate("home")
-                            }
+            DynamicButton(
+                type = 1,
+                text = "Iniciar Sesión",
+                enable = loginEnable,
+                method = {
+                    coroutineScope.launch {
+                        viewModel.signIn(context, email, password).apply {
+                            Toast.makeText(context, "Iniciando sesión", Toast.LENGTH_SHORT).show()
+                        }
+                        viewModel.onLoginSelected().apply {
+                            when (userState) {
+                                is UserState.Success -> {
+                                    Toast.makeText(
+                                        context,
+                                        (userState as UserState.Success).message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    navController.navigate("home")
+                                }
 
-                            is UserState.Error -> {
-                                Toast.makeText(
-                                    context,
-                                    (userState as UserState.Error).message,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                                is UserState.Error -> {
+                                    Toast.makeText(
+                                        context,
+                                        (userState as UserState.Error).message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
 
-                            else -> Unit
+                                else -> Unit
+                            }
                         }
                     }
-                }
-            }
-            Spacer(modifier = Modifier.padding(8.dp))
-            /*Register Button*/
-            DynamicButton(type = 2, text = "Registrame", enable = true) {
-                navController.navigate("register")
-            }
-            Spacer(modifier = Modifier.padding(8.dp))
+                },
+                textSize = 16f,
+                modifier = Modifier.padding(16.dp)
+            )
         }
+        Spacer(modifier = Modifier.padding(8.dp))
+        /*Register Button*/
+        DynamicButton(
+            type = 2,
+            text = "Registrame",
+            enable = true,
+            method = { navController.navigate("register") })
+        Spacer(modifier = Modifier.padding(8.dp))
     }
 }
+
 
 @Composable
 fun ForgotPassword(modifier: Modifier, navController: NavController) {

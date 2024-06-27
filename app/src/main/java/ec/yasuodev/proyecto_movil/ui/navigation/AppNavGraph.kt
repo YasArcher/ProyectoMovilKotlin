@@ -8,6 +8,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -45,7 +46,7 @@ fun AppNavGraph() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = currentRoute in listOf("home", "profile", "settings", "products")
-
+    val context = LocalContext.current;
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
@@ -55,7 +56,7 @@ fun AppNavGraph() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "home",
+            startDestination = "login",
             Modifier.padding(innerPadding)
         ) {
             composable("login") {
@@ -118,7 +119,7 @@ fun AppNavGraph() {
                     backStackEntry.arguments?.getString("id") ?: "",
                     backStackEntry.arguments?.getString("name") ?: "",
                     backStackEntry.arguments?.getString("store") ?: "",
-                    backStackEntry.arguments?.getFloat("price") ?: 0.0f,
+                    backStackEntry.arguments?.getDouble("price") ?: 0.0,
                     backStackEntry.arguments?.getInt("stock") ?: 0
                 )
                 EditProductScreen(EditProductViewModel(), navController, product)
@@ -128,7 +129,7 @@ fun AppNavGraph() {
                 navArgument("seller") { type = NavType.StringType }
             )) { backStackEntry ->
                 BusinessScreen(
-                    BusinessViewModel(),
+                    BusinessViewModel(context),
                     navController,
                     backStackEntry.arguments?.getString("store") ?: "",
                     backStackEntry.arguments?.getString("seller") ?: ""

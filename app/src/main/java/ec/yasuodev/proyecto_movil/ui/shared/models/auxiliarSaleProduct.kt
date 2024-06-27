@@ -8,7 +8,7 @@ data class AuxiliarSaleProduct (
     var quantity: Int = 0,
     var id_business: String = "",
     var seled_by: String = "",
-    var productPrice : Float = 0.0f,
+    var productPrice : Double = 0.0,
     var productStock : Int = 0,
     var created_at: String = ""
 )
