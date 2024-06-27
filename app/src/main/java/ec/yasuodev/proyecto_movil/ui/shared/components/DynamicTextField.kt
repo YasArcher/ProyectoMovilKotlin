@@ -3,19 +3,21 @@ package ec.yasuodev.proyecto_movil.ui.shared.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import ec.yasuodev.proyecto_movil.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DynamicField(
     value: String,
@@ -59,29 +61,36 @@ fun DynamicField(
     TextField(
         value = value,
         onValueChange = { onTextFieldChange(it) },
-        placeholder = { Text(text = placeholder) },
+        placeholder = { Text(text = placeholder, style = MaterialTheme.typography.bodyMedium) },
         modifier = Modifier.fillMaxWidth(),
         keyboardOptions = KeyboardOptions(keyboardType = type),
         singleLine = true,
-        maxLines = 1,
-        visualTransformation = if (tipo == 0 && !passwordVisible!!) PasswordVisualTransformation() else VisualTransformation.None,
+        visualTransformation = if (tipo == 0 && passwordVisible == false) PasswordVisualTransformation() else VisualTransformation.None,
         leadingIcon = leadingIconImage?.let {
-            { Icon(painter = it, contentDescription = null) }
+            {
+                Icon(
+                    painter = it,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         },
         trailingIcon = trailingIconImage?.let {
             {
                 Icon(
                     painter = it,
                     contentDescription = null,
-                    modifier = Modifier.clickable { onVisibilityChange?.invoke() })
+                    modifier = Modifier.clickable { onVisibilityChange?.invoke() },
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         },
         colors = TextFieldDefaults.textFieldColors(
-            textColor = Color.Black,
-            backgroundColor = Color.White,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent
+            containerColor = MaterialTheme.colorScheme.surface,
+            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+            unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            cursorColor = MaterialTheme.colorScheme.primary
         )
     )
 }

@@ -92,9 +92,7 @@ fun Edit(
                 modifier = Modifier
                     .size(300.dp)
                     .align(Alignment.CenterHorizontally),
-                url = selectedImageUri.toString().ifEmpty {
-                    "https://vgnnieizrwmjemlnziaj.supabase.co/storage/v1/object/public/storeApp/users/${user.image}.jpg"
-                },
+                selectedImageUri = selectedImageUri,
                 image = viewModel.imageExist(image),
             ) {
                 viewModel.onEditChanged(name, lastName, nickName, selectedImageUri)
@@ -154,7 +152,7 @@ fun Edit(
                 state = viewModel.isValidNickName(nickName)
             )
             Spacer(modifier = Modifier.padding(16.dp))
-            DynamicButton(type = 1, text = "Editar", enable = editEnable, method ={
+            DynamicButton(type = 1, text = "Editar", enable = editEnable, method = {
                 coroutineScope.launch {
                     try {
                         viewModel.updateUser(
@@ -203,8 +201,16 @@ fun Edit(
 }
 
 @Composable
-fun ImageHeader(modifier: Modifier, url: String, image: String, onImageClick: () -> Unit) {
-    if (image != "noImage") {
+fun ImageHeader(modifier: Modifier, selectedImageUri: Uri, image: String, onImageClick: () -> Unit) {
+    if (selectedImageUri != Uri.EMPTY) {
+        val painter = rememberAsyncImagePainter(selectedImageUri)
+        Image(
+            painter = painter,
+            contentDescription = "Header Image",
+            modifier = modifier.clickable { onImageClick() },
+        )
+    } else if (image != "noImage") {
+        val url = "https://vgnnieizrwmjemlnziaj.supabase.co/storage/v1/object/public/storeApp/users/$image.jpg"
         val painter = rememberAsyncImagePainter(url)
         Image(
             painter = painter,

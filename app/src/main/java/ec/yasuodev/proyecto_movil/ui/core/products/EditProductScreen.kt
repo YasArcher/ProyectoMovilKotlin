@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -66,87 +68,93 @@ fun Edit(
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         }
     } else {
-
-        Column(modifier = modifier) {
-            DynamicField(
-                value = name,
-                onTextFieldChange = { newValue ->
-                    viewModel.onEditChanged(
-                        newValue,
-                        price,
-                        stock
-                    )
-                },
-                tipo = 2,
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
-            DynamicText(
-                message = viewModel.onEditMessageName(name),
-                state = viewModel.isValidName(name)
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
-            DynamicField(
-                value = price,
-                onTextFieldChange = { newValue ->
-                    viewModel.onEditChanged(
-                        name,
-                        newValue,
-                        stock
-                    )
-                },
-                tipo = 5,
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
-            DynamicText(
-                message = viewModel.onEditMessagePrice(price),
-                state = viewModel.isValidPrice(price)
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
-            DynamicField(
-                value = stock,
-                onTextFieldChange = { newValue ->
-                    viewModel.onEditChanged(
-                        name,
-                        price,
-                        newValue
-                    )
-                },
-                tipo = 5,
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
-            DynamicText(
-                message = viewModel.onEditMessageStock(stock),
-                state = viewModel.isValidStock(stock)
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
-            DynamicButton(type = 1, text = "Editar", enable = editEnable, method ={
-                coroutineScope.launch {
-                    viewModel.updateProduct().apply {
-                        Toast.makeText(context, "Actualizando producto", Toast.LENGTH_SHORT).show()
-                    }
-                    viewModel.onEditSelected().apply {
-                        when (editState) {
-                            is EditState.Success -> {
-                                Toast.makeText(
-                                    context,
-                                    (editState as EditState.Success).message,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                navController.navigate("products")
+        Surface(
+            modifier = modifier,
+            color = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onBackground
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                DynamicField(
+                    value = name,
+                    onTextFieldChange = { newValue ->
+                        viewModel.onEditChanged(
+                            newValue,
+                            price,
+                            stock
+                        )
+                    },
+                    tipo = 2,
+                )
+                Spacer(modifier = Modifier.padding(8.dp))
+                DynamicText(
+                    message = viewModel.onEditMessageName(name),
+                    state = viewModel.isValidName(name)
+                )
+                Spacer(modifier = Modifier.padding(8.dp))
+                DynamicField(
+                    value = price,
+                    onTextFieldChange = { newValue ->
+                        viewModel.onEditChanged(
+                            name,
+                            newValue,
+                            stock
+                        )
+                    },
+                    tipo = 5,
+                )
+                Spacer(modifier = Modifier.padding(8.dp))
+                DynamicText(
+                    message = viewModel.onEditMessagePrice(price),
+                    state = viewModel.isValidPrice(price)
+                )
+                Spacer(modifier = Modifier.padding(8.dp))
+                DynamicField(
+                    value = stock,
+                    onTextFieldChange = { newValue ->
+                        viewModel.onEditChanged(
+                            name,
+                            price,
+                            newValue
+                        )
+                    },
+                    tipo = 5,
+                )
+                Spacer(modifier = Modifier.padding(8.dp))
+                DynamicText(
+                    message = viewModel.onEditMessageStock(stock),
+                    state = viewModel.isValidStock(stock)
+                )
+                Spacer(modifier = Modifier.padding(16.dp))
+                DynamicButton(type = 1, text = "Editar", enable = editEnable,{
+                    coroutineScope.launch {
+                        viewModel.updateProduct().apply {
+                            Toast.makeText(context, "Actualizando producto", Toast.LENGTH_SHORT).show()
+                        }
+                        viewModel.onEditSelected().apply {
+                            when (editState) {
+                                is EditState.Success -> {
+                                    Toast.makeText(
+                                        context,
+                                        (editState as EditState.Success).message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    navController.navigate("products")
+                                }
+                                is EditState.Error -> {
+                                    Toast.makeText(
+                                        context,
+                                        (editState as EditState.Error).message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                                else -> Unit
                             }
-
-                            is EditState.Error -> {
-                                Toast.makeText(
-                                    context,
-                                    (editState as EditState.Error).message,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            else -> Unit
                         }
                     }
-                }
-            })
+                })
+            }
         }
     }
 }

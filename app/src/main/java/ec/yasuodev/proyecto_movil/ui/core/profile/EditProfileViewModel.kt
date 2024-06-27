@@ -42,7 +42,7 @@ class EditProfileViewModel : ViewModel() {
         }
     }
 
-    fun imageExist(image: String): String{
+    fun imageExist(image: String): String {
         _image.value = image
         return image
     }
@@ -113,7 +113,7 @@ class EditProfileViewModel : ViewModel() {
                         }
                     } else {
                         _selectedImageUri.value?.let {
-                            bucket.upload("users/${id}.jpg", imageBytes, upsert = false)
+                            bucket.upload("users/${imageName}.jpg", imageBytes, upsert = false)
                         }
                     }
                 }
@@ -124,7 +124,6 @@ class EditProfileViewModel : ViewModel() {
             }
         }
     }
-
 
     suspend fun onEditSelected() {
         _isLoading.value = true
