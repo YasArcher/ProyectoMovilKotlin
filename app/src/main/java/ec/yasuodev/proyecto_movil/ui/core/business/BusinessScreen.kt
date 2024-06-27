@@ -22,9 +22,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,6 +58,7 @@ import androidx.navigation.NavController
 import ec.yasuodev.proyecto_movil.ui.core.models.AddState
 import ec.yasuodev.proyecto_movil.ui.shared.models.AuxiliarSaleProduct
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
+import ec.yasuodev.proyecto_movil.ui.shared.models.Sale
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import kotlinx.coroutines.launch
 
@@ -269,6 +272,7 @@ fun StatItem(label: String, amount: Double, color: Color) {
 
 fun Double.format(digits: Int) = "%.${digits}f".format(this)
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SalesList(
     viewModel: BusinessViewModel,
@@ -288,8 +292,19 @@ fun SalesList(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
+    var showEditDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    if (showEditDialog) {
+        EditSaleDialog(
+            viewModel = viewModel,
+            sale = product,
+            onDismiss = { showEditDialog = false })
+    }
+
     Card(
         modifier = Modifier
             .padding(vertical = 8.dp, horizontal = 16.dp)
@@ -319,9 +334,33 @@ fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f)
             )
+            IconButton(
+                onClick = {
+                    coroutineScope.launch {
+                        viewModel.deleteSaleProduct(product.id).apply {
+                            Toast.makeText(
+                                context,
+                                "Eliminando Venta",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                    viewModel.deleteSaleProduct(product.id)
+                }
+            ) {
+                Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
+            }
+            IconButton(
+                onClick = {
+                    showEditDialog = true
+                }
+            ) {
+                Icon(Icons.Filled.Edit, contentDescription = "Editar")
+            }
         }
     }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -338,8 +377,15 @@ fun ProductSelectionDialog(
     var quantity by remember { mutableIntStateOf(1) }
     val context = LocalContext.current
     val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
+
     LaunchedEffect(searchQuery) {
         viewModel.filterProducts(searchQuery)
+    }
+
+    LaunchedEffect(addState) {
+        if (addState is AddState.Success) {
+            onDismiss()
+        }
     }
 
     AlertDialog(
@@ -357,14 +403,20 @@ fun ProductSelectionDialog(
                 )
                 LazyColumn(modifier = Modifier.height(200.dp)) {
                     items(filteredProducts) { product ->
-                        ProductRow(product, isSelected = selectedProduct?.id == product.id) {
-                            selectedProduct = product
-                            searchQuery = product.name
+                        if (product.stock > 0) {
+                            ProductRow(product, isSelected = selectedProduct?.id == product.id) {
+                                selectedProduct = product
+                                searchQuery = product.name
+                            }
                         }
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                QuantitySelector(quantity, onQuantityChange = { quantity = it })
+                QuantitySelector(
+                    quantity,
+                    onQuantityChange = { quantity = it },
+                    selectedProduct?.stock ?: 0
+                )
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
                 Row(
                     modifier = Modifier
@@ -415,7 +467,9 @@ fun ProductSelectionDialog(
                                 }
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        enabled = selectedProduct != null && quantity <= (selectedProduct?.stock
+                            ?: 0)
                     ) {
                         Text("Agregar", color = Color.White)
                     }
@@ -549,7 +603,7 @@ fun ProductRow(product: Product, isSelected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun QuantitySelector(quantity: Int, onQuantityChange: (Int) -> Unit) {
+fun QuantitySelector(quantity: Int, onQuantityChange: (Int) -> Unit, maxQuantity: Int) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -563,8 +617,117 @@ fun QuantitySelector(quantity: Int, onQuantityChange: (Int) -> Unit) {
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-        Button(onClick = { onQuantityChange(quantity + 1) }) {
+        Button(onClick = { if (quantity < maxQuantity) onQuantityChange(quantity + 1) }) {
             Icon(Icons.Filled.Add, "Aumentar")
         }
     }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun EditSaleDialog(
+    viewModel: BusinessViewModel,
+    sale: AuxiliarSaleProduct,
+    onDismiss: () -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+    var quantity by remember { mutableIntStateOf(sale.quantity) }
+    val context = LocalContext.current
+    val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
+
+    LaunchedEffect(addState) {
+        if (addState is AddState.Success) {
+            onDismiss()
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text("Editar Venta", style = MaterialTheme.typography.titleMedium) },
+        text = {
+            Column {
+                Text("Producto: ${sale.productName}", style = MaterialTheme.typography.bodyLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                QuantitySelector(
+                    quantity,
+                    onQuantityChange = { quantity = it },
+                    maxQuantity = sale.productStock + sale.quantity // sumamos la cantidad actual a la del stock
+                )
+                Divider(modifier = Modifier.padding(vertical = 8.dp))
+            }
+        },
+        confirmButton = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    onClick = { onDismiss() },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Cancelar", color = Color.White)
+                }
+                Spacer(Modifier.width(16.dp))
+                Button(
+                    onClick = {
+                        if (quantity in 1..(sale.productStock + sale.quantity)) {
+                            val updatedSale = sale.copy(
+                                quantity = quantity,
+                                total = (quantity * sale.productPrice).toDouble()
+                            )
+                            coroutineScope.launch {
+                                viewModel.updateSaleProduct(updatedSale.toSale()).apply {
+                                    Toast.makeText(
+                                        context,
+                                        "Actualizando Venta",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                                viewModel.onAddSelected().apply {
+                                    when (addState) {
+                                        is AddState.Success -> {
+                                            Toast.makeText(
+                                                context,
+                                                (addState as AddState.Success).message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+
+                                        is AddState.Error -> {
+                                            Toast.makeText(
+                                                context,
+                                                (addState as AddState.Error).message,
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+
+                                        else -> Unit
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    enabled = quantity in 1..(sale.productStock + sale.quantity)
+                ) {
+                    Text("Actualizar", color = Color.White)
+                }
+            }
+        },
+        dismissButton = {}
+    )
+}
+
+private fun AuxiliarSaleProduct.toSale(): Sale {
+    return Sale(
+        id = this.id,
+        created_at = this.created_at,
+        total = this.total,
+        product = this.product,
+        quantity = this.quantity,
+        id_business = this.id_business,
+        seled_by = this.seled_by
+    )
 }

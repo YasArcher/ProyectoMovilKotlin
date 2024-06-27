@@ -9,7 +9,8 @@ data class AuxiliarSaleProduct (
     var id_business: String = "",
     var seled_by: String = "",
     var productPrice : Float = 0.0f,
-    var productStock : Int = 0
+    var productStock : Int = 0,
+    var created_at: String = ""
 )
 
 fun generateUUID(): String {

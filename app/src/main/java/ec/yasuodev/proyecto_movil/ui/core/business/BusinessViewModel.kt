@@ -19,14 +19,14 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class BusinessViewModel: ViewModel() {
+class BusinessViewModel : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
     private val _store = MutableLiveData<Store>()
     val store: LiveData<Store> = _store
     private val _income = MutableLiveData<Double>(0.0)
     val income: LiveData<Double> = _income
-    private val _expenditures= MutableLiveData<Double>(0.0)
+    private val _expenditures = MutableLiveData<Double>(0.0)
     val expenditures: LiveData<Double> = _expenditures
     private val _salesList = MutableLiveData<List<Sale>>(emptyList())
     val salesList: LiveData<List<Sale>> = _salesList
@@ -46,17 +46,18 @@ class BusinessViewModel: ViewModel() {
     fun filterProducts(query: String) {
         val products = _products.value ?: return
         _filteredProducts.value = if (query.isEmpty()) {
-            products
+            products.filter { it.stock > 0 }
         } else {
-            products.filter { it.name.contains(query, ignoreCase = true) }
+            products.filter { it.name.contains(query, ignoreCase = true) && it.stock > 0 }
         }
     }
+
     fun showDialog(show: Boolean) {
         _showDialog.value = show
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun fetchBusiness(id: String ) {
+    fun fetchBusiness(id: String) {
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("business").select(
@@ -78,13 +79,15 @@ class BusinessViewModel: ViewModel() {
         }
         fetchProducts(id)
     }
+
     suspend fun onAddSelected() {
         _isLoading.value = true
         delay(4000)
         _isLoading.value = false
     }
+
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun fetchProducts(store_id: String){
+    private fun fetchProducts(store_id: String) {
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("products").select(
@@ -109,35 +112,52 @@ class BusinessViewModel: ViewModel() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun addSaleProduct(product: Product, quantity: Int, seled_by: String){
+    fun addSaleProduct(product: Product, quantity: Int, seled_by: String) {
         viewModelScope.launch {
             val date = java.time.LocalDate.now().toString()
             try {
                 val sale = Sale(
                     id = generateUUID(),
-                    created_at = date ,
+                    created_at = date,
                     total = (product.price * quantity).toDouble(),
                     product = product.id,
                     quantity = quantity,
                     id_business = product.store,
                     seled_by = seled_by
                 )
-                SupabaseClient.client.from("sales").insert(
-                    sale
-                )
+                SupabaseClient.client.from("sales").insert(sale)
+
+                // Update product stock
+                val newStock = product.stock - quantity
+                val updatedProduct = product.copy(stock = newStock)
+                SupabaseClient.client.from("products").update(updatedProduct) {
+                    filter {
+                        eq("id", product.id)
+                    }
+                }
+
+                // Update local state
                 val updatedSalesList = _salesList.value?.toMutableList() ?: mutableListOf()
                 updatedSalesList.add(sale)
                 _salesList.value = updatedSalesList
+
+                val updatedProducts = _products.value?.map {
+                    if (it.id == product.id) updatedProduct else it
+                }
+                _products.value = updatedProducts!!
+
                 makeAuxiliarSaleProduct()
                 _addState.value = AddState.Success("Producto vendido")
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 _addState.value = AddState.Error("Error al vender producto")
+            } finally {
+                resetAddState()
             }
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun addPurchase(amount: Double, reason: String, store_id: String){
+    fun addPurchase(amount: Double, reason: String, store_id: String) {
         viewModelScope.launch {
             try {
                 val purchase = Purchase(
@@ -155,13 +175,81 @@ class BusinessViewModel: ViewModel() {
                 _purchasesList.value = updatedPurchasesList
                 _addState.value = AddState.Success("Gasto registrado")
                 getExpendituresByDate(store_id, java.time.LocalDate.now().toString())
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 _addState.value = AddState.Error("Error al registrar gasto")
+            } finally {
+                resetAddState()
             }
         }
     }
 
-    private fun getSalesByDate(store_id: String, date: String){
+    fun deleteSaleProduct(sale: String) {
+        viewModelScope.launch {
+            try {
+                SupabaseClient.client.from("sales").delete {
+                    filter {
+                        eq("id", sale)
+                    }
+                }
+                val updatedSalesList = _salesList.value?.toMutableList() ?: mutableListOf()
+                updatedSalesList.remove(updatedSalesList.find { it.id == sale })
+                _salesList.value = updatedSalesList
+                makeAuxiliarSaleProduct()
+                resetAddState()
+                _addState.value = AddState.Success("Venta eliminada")
+            } catch (e: Exception) {
+                _addState.value = AddState.Error("Error al eliminar venta")
+            } finally {
+                resetAddState()
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun updateSaleProduct(sale: Sale) {
+        viewModelScope.launch {
+            try {
+                val originalSale = _salesList.value?.find { it.id == sale.id }
+                val difference = sale.quantity - (originalSale?.quantity ?: 0)
+
+                SupabaseClient.client.from("sales").update(sale) {
+                    filter {
+                        eq("id", sale.id)
+                    }
+                }
+
+                val product = _products.value?.find { it.id == sale.product }
+                product?.let {
+                    val newStock = it.stock - difference
+                    val updatedProduct = it.copy(stock = newStock)
+                    SupabaseClient.client.from("products").update(updatedProduct) {
+                        filter {
+                            eq("id", it.id)
+                        }
+                    }
+
+                    val updatedProducts = _products.value?.map { p ->
+                        if (p.id == it.id) updatedProduct else p
+                    }
+                    _products.value = updatedProducts!!
+                }
+
+                val updatedSalesList = _salesList.value?.toMutableList() ?: mutableListOf()
+                val index = updatedSalesList.indexOfFirst { it.id == sale.id }
+                updatedSalesList[index] = sale
+                _salesList.value = updatedSalesList
+
+                makeAuxiliarSaleProduct()
+                _addState.value = AddState.Success("Venta actualizada")
+            } catch (e: Exception) {
+                _addState.value = AddState.Error("Error al actualizar venta")
+            } finally {
+                resetAddState()
+            }
+        }
+    }
+
+    private fun getSalesByDate(store_id: String, date: String) {
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("sales").select(
@@ -196,7 +284,7 @@ class BusinessViewModel: ViewModel() {
         }
     }
 
-    fun getExpendituresByDate(store_id: String, date: String){
+    fun getExpendituresByDate(store_id: String, date: String) {
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("purchases").select(
@@ -245,12 +333,20 @@ class BusinessViewModel: ViewModel() {
                         id_business = sale.id_business,
                         seled_by = sale.seled_by,
                         productPrice = product.price,
-                        productStock = product.stock
+                        productStock = product.stock,
+                        created_at = sale.created_at
                     )
                     auxiliarSaleProductList.add(auxiliarSaleProduct)
                 }
             }
         }
         _productsModel.value = auxiliarSaleProductList
+    }
+
+    private fun resetAddState() {
+        viewModelScope.launch {
+            delay(2000)
+            _addState.value = AddState.Loading
+        }
     }
 }
