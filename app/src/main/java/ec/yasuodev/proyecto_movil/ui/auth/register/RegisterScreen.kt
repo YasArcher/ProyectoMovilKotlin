@@ -24,8 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import ec.yasuodev.proyecto_movil.R
 import ec.yasuodev.proyecto_movil.ui.auth.models.UserState
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicButton
@@ -183,4 +185,12 @@ fun HeaderImage(modifier: Modifier) {
         contentDescription = "Header Image",
         modifier = modifier
     )
+}
+@Preview(showBackground = true)
+@Composable
+fun RegisterScreenPreview() {
+    val navController = rememberNavController()
+    val viewModel = RegisterViewModel() // Asegúrate de que RegisterViewModel pueda ser instanciado sin parámetros
+
+    RegisterScreen(viewModel = viewModel, navController = navController)
 }
