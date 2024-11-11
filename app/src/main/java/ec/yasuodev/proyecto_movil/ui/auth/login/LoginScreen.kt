@@ -5,6 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -47,49 +48,47 @@ fun LoginScreen(viewModel: LoginViewModel, navController: NavController) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Column(
+            // Cabecera morada con la imagen superpuesta
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .size(190.dp)
+                    .background(
+                        color = Color(0xFF9B86BE),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(bottomStart = 60.dp, bottomEnd = 60.dp)
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                // Cabecera morada con forma curva
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .size(250.dp)
-                        .background(
-                            color = Color(0xFF9B86BE),
-                            shape = androidx.compose.foundation.shape.RoundedCornerShape(bottomStart = 60.dp, bottomEnd = 60.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Digital Inventory Hub",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            color = Color.White,
-                            fontFamily = FontFamily.SansSerif,
-                            fontSize = 29.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                Text(
+                    text = "Digital Inventory Hub",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = Color.White,
+                        fontFamily = FontFamily.SansSerif,
+                        fontSize = 29.sp,
+                        fontWeight = FontWeight.SemiBold,
                     )
-                }
-
-                Spacer(modifier = Modifier.height(80.dp)) // Espacio para la imagen
-
-                // Contenido principal (Formulario de inicio de sesión)
-                Login(Modifier.align(Alignment.CenterHorizontally), viewModel, navController)
+                )
             }
 
-            // Imagen superpuesta a la cabecera
+            // Imagen superpuesta en la cabecera
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(y = 130.dp) // Ajusta la posición vertical de la imagen
+                    .offset(y = 100.dp) // Ajusta la posición vertical de la imagen
             ) {
                 HeaderImage(
-                    modifier = Modifier
-                        .size(120.dp)
+                    modifier = Modifier.size(220.dp)
+                    
                 )
+            }
+            // Contenido principal desplazable
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 250.dp) // Deja espacio para la cabecera
+                    .verticalScroll(rememberScrollState()) // Habilita el desplazamiento en la columna
+            ) {
+                Login(modifier = Modifier.align(Alignment.CenterHorizontally), viewModel, navController)
             }
         }
     }
@@ -121,14 +120,15 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
             modifier = modifier.padding(horizontal = 32.dp)
         ) {
             Spacer(modifier = Modifier.padding(16.dp))
-
             // Campo de Email
             Text(
                 text = "Email",
                 fontSize = 14.sp,
-                color = Color(0xFF9C88FF), // Color morado del texto
+                color = Color(0xFF443D8B), // Color morado del texto
                 modifier = Modifier.align(Alignment.Start)
             )
+            Spacer(modifier = Modifier.padding(3.dp))
+
             DynamicField(
                 value = email,
                 onTextFieldChange = { newValue -> viewModel.onLoginChanged(newValue, password) },
@@ -147,9 +147,11 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
             Text(
                 text = "Contraseña",
                 fontSize = 14.sp,
-                color = Color(0xFF9C88FF),
+                color = Color(0xFF443D8B),
                 modifier = Modifier.align(Alignment.Start)
             )
+            Spacer(modifier = Modifier.padding(3.dp))
+
             DynamicField(
                 value = password,
                 onTextFieldChange = { newValue -> viewModel.onLoginChanged(email, newValue) },
@@ -171,11 +173,11 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
                 modifier = Modifier.align(Alignment.End),
                 navController = navController
             )
-            Spacer(modifier = Modifier.padding(16.dp))
+            Spacer(modifier = Modifier.padding(10.dp))
 
             // Botón de Iniciar Sesión
             DynamicButton(
-                type = 1,
+                type = 4,
                 text = "Iniciar Sesión",
                 enable = loginEnable,
                 method = {
@@ -218,8 +220,8 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
             // Texto de registro
             Text(
                 text = "No tienes cuenta? Regístrate ya!",
-                fontSize = 12.sp,
-                color = Color(0xFF9C88FF),
+                fontSize = 15.sp,
+                color = Color(0xFF9B86BE),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         }
@@ -232,8 +234,8 @@ fun ForgotPassword(modifier: Modifier, navController: NavController) {
         text = "¿Olvidaste tu contraseña?",
         modifier = modifier.clickable { navController.navigate("reset") },
         fontSize = 15.sp,
-        fontFamily =  FontFamily.SansSerif,
-        color = Color(0xFF9C88FF) // Color morado
+        fontFamily = FontFamily.SansSerif,
+        color = Color(0xFF443D8B) // Color morado
     )
 }
 
@@ -242,7 +244,7 @@ fun HeaderImage(modifier: Modifier) {
     Image(
         painter = painterResource(id = R.drawable.login),
         contentDescription = "Header Image",
-        modifier = Modifier.size(220.dp)
+        modifier = modifier
     )
 }
 

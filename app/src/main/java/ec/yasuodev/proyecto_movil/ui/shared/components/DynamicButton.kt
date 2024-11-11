@@ -56,6 +56,12 @@ private fun buttonColors(type: Int) = when (type) {
         disabledContentColor = Color.DarkGray,
         disabledContainerColor = Color.LightGray,
     )
+    4 -> ButtonDefaults.buttonColors(
+        contentColor = Color.White,
+        containerColor = Color(0xFF443D8B), // Purple
+        disabledContentColor = Color.LightGray,
+        disabledContainerColor = Color.Gray
+    )
     else -> ButtonDefaults.buttonColors(
         contentColor = Color.Gray,
         containerColor = Color.White,
