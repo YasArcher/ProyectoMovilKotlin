@@ -121,6 +121,7 @@ class RegisterViewModel : ViewModel() {
             } catch (e: Exception) {
                 _registerSuccess.value = false
                 _userState.value = UserState.Error("Error al registrarse: Correo ya registrado")
+                println("error$$$$$$$$$$$"+e)
             }
         }
     }

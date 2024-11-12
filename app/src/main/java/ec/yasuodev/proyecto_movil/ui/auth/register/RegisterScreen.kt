@@ -2,19 +2,10 @@ package ec.yasuodev.proyecto_movil.ui.auth.register
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -24,8 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ec.yasuodev.proyecto_movil.R
@@ -39,33 +33,65 @@ import kotlinx.coroutines.launch
 @Composable
 fun RegisterScreen(viewModel: RegisterViewModel, navController: NavController) {
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Registrar",
-                        style = MaterialTheme.typography.titleLarge.copy(color = Color.White)
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color(0xFF9B86BE) // Todo el fondo en color morado
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Register(Modifier.align(Alignment.Center), viewModel, navController)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(),
+
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Cabecera morada con texto centrado y la imagen debajo
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // Título centrado
+                        Text(
+                            text = "Regístrate",
+                            fontSize = 30.sp,
+                            color = Color.White,
+
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.SansSerif
+                        )
+                        Spacer(modifier = Modifier.height(15.dp))
+                        // Imagen debajo del título
+                        HeaderImage(modifier = Modifier.size(100.dp))
+                    }
+                }
+
+
+                // Fondo blanco con esquinas redondeadas para el formulario
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                        .padding(0.dp)
+                        .background(
+                            color = Color.White,
+                            shape = RoundedCornerShape(topStart = 45.dp, topEnd = 45.dp) // Forma de arco en los bordes superiores
+                        )
+                        .padding(horizontal = 48.dp, vertical = 40.dp),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    RegisterContent(viewModel, navController)
+                }
+            }
         }
     }
 }
 
 @Composable
-fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: NavController) {
+fun RegisterContent(viewModel: RegisterViewModel, navController: NavController) {
     val userState: UserState by viewModel.userState.observeAsState(initial = UserState.Loading)
     val context = LocalContext.current
     val email: String by viewModel.email.observeAsState(initial = "")
@@ -83,12 +109,18 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         }
     } else {
-        Column(
-            modifier = modifier
-                .padding(horizontal = 32.dp)
-        ) {
-            HeaderImage(modifier = Modifier.size(120.dp).align(Alignment.CenterHorizontally))
-            Spacer(modifier = Modifier.padding(16.dp))
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // Campos de entrada
+            Spacer(modifier = Modifier.padding(5.dp))
+
+            Text(
+                text = "Email",
+                fontSize = 14.sp,
+                color = Color(0xFF443D8B),
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.padding(4.dp))
+
             DynamicField(
                 value = email,
                 onTextFieldChange = { newValue ->
@@ -100,12 +132,16 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
                 },
                 tipo = 1,
             )
-            Spacer(modifier = Modifier.padding(4.dp))
-            DynamicText(
-                message = viewModel.onRegisterMessageEmail(email),
-                state = viewModel.isValidEmail(email)
+            Spacer(modifier = Modifier.padding(5.dp))
+
+            Text(
+                text = "Contraseña",
+                fontSize = 14.sp,
+                color = Color(0xFF443D8B),
+                modifier = Modifier.align(Alignment.Start)
             )
-            Spacer(modifier = Modifier.padding(8.dp))
+            Spacer(modifier = Modifier.padding(4.dp))
+
             DynamicField(
                 value = password,
                 onTextFieldChange = { newValue ->
@@ -119,12 +155,17 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
                 passwordVisible = passwordVisible,
                 onVisibilityChange = { viewModel.togglePasswordVisibility() }
             )
-            Spacer(modifier = Modifier.padding(4.dp))
-            DynamicText(
-                message = viewModel.onRegisterMessagePassword(password),
-                state = viewModel.isValidPassword(password)
+            Spacer(modifier = Modifier.padding(5.dp))
+
+            Text(
+                text = "Confirmar Contraseña",
+                fontSize = 14.sp,
+                color = Color(0xFF443D8B),
+                modifier = Modifier.align(Alignment.Start)
             )
-            Spacer(modifier = Modifier.padding(8.dp))
+            Spacer(modifier = Modifier.padding(4.dp))
+
+
             DynamicField(
                 value = confirmPassword,
                 onTextFieldChange = { newValue ->
@@ -138,15 +179,12 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
                 passwordVisible = confirmPasswordVisible,
                 onVisibilityChange = { viewModel.toggleConfirmPasswordVisibility() }
             )
-            Spacer(modifier = Modifier.padding(4.dp))
-            DynamicText(
-                message = viewModel.onRegisterMessageConfirmationPassword(confirmPassword),
-                state = viewModel.isConfirmPassword(password, confirmPassword)
-            )
-            Spacer(modifier = Modifier.padding(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Botón de registro
             DynamicButton(
-                type = 1,
-                text = "Registrame",
+                type = 4,
+                text = "Registrarme",
                 enable = registerEnable,
                 method = {
                     coroutineScope.launch {
@@ -172,7 +210,19 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
                     }
                 },
                 textSize = 16f,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Texto de enlace para iniciar sesión
+            Text(
+                text = "Ya tienes cuenta? Inicia sesión aquí!",
+                fontSize = 15.sp,
+                color = Color(0xFF9B86BE),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         }
     }
@@ -180,12 +230,24 @@ fun Register(modifier: Modifier, viewModel: RegisterViewModel, navController: Na
 
 @Composable
 fun HeaderImage(modifier: Modifier) {
-    Image(
-        painter = painterResource(id = R.drawable.convenience_store_cash_register_female_svgrepo_com), // Reemplaza con el ID de tu imagen
-        contentDescription = "Header Image",
-        modifier = modifier
-    )
+    Box(
+        modifier = Modifier
+            .size(100.dp)
+            .background(
+                color = Color(0xFF5A639C), // Color de fondo
+                shape = RoundedCornerShape(34.dp) // Bordes redondeados
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.convenience_store_cash_register_female_svgrepo_com),
+            contentDescription = "Header Image",
+            modifier = modifier.padding(6.dp) // Ajusta el padding para dar espacio dentro del fondo
+        )
+    }
 }
+
+
 @Preview(showBackground = true)
 @Composable
 fun RegisterScreenPreview() {
