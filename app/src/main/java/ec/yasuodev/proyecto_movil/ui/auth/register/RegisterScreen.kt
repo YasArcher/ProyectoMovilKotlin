@@ -4,7 +4,9 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,7 +31,6 @@ import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicField
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicText
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(viewModel: RegisterViewModel, navController: NavController) {
     Scaffold(
@@ -39,11 +40,11 @@ fun RegisterScreen(viewModel: RegisterViewModel, navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState()) // Habilita el desplazamiento
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize(),
-
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Cabecera morada con texto centrado y la imagen debajo
@@ -54,31 +55,25 @@ fun RegisterScreen(viewModel: RegisterViewModel, navController: NavController) {
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        // Título centrado
                         Text(
                             text = "Regístrate",
                             fontSize = 30.sp,
                             color = Color.White,
-
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.SansSerif
                         )
                         Spacer(modifier = Modifier.height(15.dp))
-                        // Imagen debajo del título
                         HeaderImage(modifier = Modifier.size(100.dp))
                     }
                 }
-
 
                 // Fondo blanco con esquinas redondeadas para el formulario
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight()
-                        .padding(0.dp)
                         .background(
                             color = Color.White,
-                            shape = RoundedCornerShape(topStart = 45.dp, topEnd = 45.dp) // Forma de arco en los bordes superiores
+                            shape = RoundedCornerShape(topStart = 45.dp, topEnd = 45.dp)
                         )
                         .padding(horizontal = 48.dp, vertical = 40.dp),
                     contentAlignment = Alignment.TopCenter
@@ -110,7 +105,6 @@ fun RegisterContent(viewModel: RegisterViewModel, navController: NavController) 
         }
     } else {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // Campos de entrada
             Spacer(modifier = Modifier.padding(5.dp))
 
             Text(
@@ -132,7 +126,13 @@ fun RegisterContent(viewModel: RegisterViewModel, navController: NavController) 
                 },
                 tipo = 1,
             )
-            Spacer(modifier = Modifier.padding(5.dp))
+            Spacer(modifier = Modifier.padding(4.dp))
+            DynamicText(
+                message = viewModel.onRegisterMessageEmail(email),
+                state = viewModel.isValidEmail(email)
+            )
+
+            Spacer(modifier = Modifier.padding(2.dp))
 
             Text(
                 text = "Contraseña",
@@ -155,7 +155,13 @@ fun RegisterContent(viewModel: RegisterViewModel, navController: NavController) 
                 passwordVisible = passwordVisible,
                 onVisibilityChange = { viewModel.togglePasswordVisibility() }
             )
-            Spacer(modifier = Modifier.padding(5.dp))
+            Spacer(modifier = Modifier.padding(4.dp))
+            DynamicText(
+                message = viewModel.onRegisterMessagePassword(password),
+                state = viewModel.isValidPassword(password)
+            )
+
+            Spacer(modifier = Modifier.padding(2.dp))
 
             Text(
                 text = "Confirmar Contraseña",
@@ -164,7 +170,6 @@ fun RegisterContent(viewModel: RegisterViewModel, navController: NavController) 
                 modifier = Modifier.align(Alignment.Start)
             )
             Spacer(modifier = Modifier.padding(4.dp))
-
 
             DynamicField(
                 value = confirmPassword,
@@ -179,9 +184,14 @@ fun RegisterContent(viewModel: RegisterViewModel, navController: NavController) 
                 passwordVisible = confirmPasswordVisible,
                 onVisibilityChange = { viewModel.toggleConfirmPasswordVisibility() }
             )
+            Spacer(modifier = Modifier.padding(4.dp))
+            DynamicText(
+                message = viewModel.onRegisterMessageConfirmationPassword(confirmPassword),
+                state = viewModel.isConfirmPassword(password, confirmPassword)
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón de registro
             DynamicButton(
                 type = 4,
                 text = "Registrarme",
@@ -217,7 +227,6 @@ fun RegisterContent(viewModel: RegisterViewModel, navController: NavController) 
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Texto de enlace para iniciar sesión
             Text(
                 text = "Ya tienes cuenta? Inicia sesión aquí!",
                 fontSize = 15.sp,
@@ -234,19 +243,18 @@ fun HeaderImage(modifier: Modifier) {
         modifier = Modifier
             .size(100.dp)
             .background(
-                color = Color(0xFF5A639C), // Color de fondo
-                shape = RoundedCornerShape(34.dp) // Bordes redondeados
+                color = Color(0xFF5A639C),
+                shape = RoundedCornerShape(34.dp)
             ),
         contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(id = R.drawable.convenience_store_cash_register_female_svgrepo_com),
             contentDescription = "Header Image",
-            modifier = modifier.padding(6.dp) // Ajusta el padding para dar espacio dentro del fondo
+            modifier = modifier.padding(6.dp)
         )
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
