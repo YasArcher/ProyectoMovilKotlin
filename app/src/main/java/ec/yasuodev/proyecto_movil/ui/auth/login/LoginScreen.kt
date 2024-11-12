@@ -217,13 +217,20 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
 
             Spacer(modifier = Modifier.padding(8.dp))
 
-            // Texto de registro
+            // Texto de registro con funcionalidad de botón
             Text(
                 text = "No tienes cuenta? Regístrate ya!",
                 fontSize = 15.sp,
                 color = Color(0xFF9B86BE),
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .clickable {
+                        navController.navigate("register")
+                    }
+                    .padding(vertical = 8.dp) // Agrega padding si deseas más espacio alrededor del texto
             )
+
+
         }
     }
 }
