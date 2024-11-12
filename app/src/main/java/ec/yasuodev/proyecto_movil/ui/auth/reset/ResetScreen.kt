@@ -56,6 +56,7 @@ fun ResetScreen(viewModel: ResetViewModel, navController: NavController) {
                         ),
                     contentAlignment = Alignment.Center
                 ) {
+
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = "Restablecer contraseña",
@@ -79,10 +80,11 @@ fun ResetScreen(viewModel: ResetViewModel, navController: NavController) {
                 // Texto de instrucción
                 Text(
                     text = "Ingrese su correo electrónico",
-                    fontSize = 16.sp,
+                    fontSize = 22.sp,
                     color = Color(0xFF443D8B),
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
+                Spacer(modifier = Modifier.height(30.dp))
 
                 // Formulario para correo electrónico y botón de enviar
                 Reset(Modifier.padding(horizontal = 32.dp), viewModel, navController)
@@ -120,7 +122,7 @@ fun Reset(modifier: Modifier, viewModel: ResetViewModel, navController: NavContr
             )
             Spacer(modifier = Modifier.padding(16.dp))
             DynamicButton(
-                type = 1,
+                type = 4,
                 text = "Enviar",
                 enable = resetEnable,
                 method = {
