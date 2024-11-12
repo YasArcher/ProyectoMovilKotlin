@@ -17,7 +17,7 @@ import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
+open class HomeViewModel : ViewModel() {
     private val _token = MutableLiveData<String>()
     private val _user = MutableLiveData<User>()
     private val _userID = MutableLiveData<String>()
@@ -31,7 +31,7 @@ class HomeViewModel : ViewModel() {
     val storeList: LiveData<List<Store>> = _storeList
 
 
-    fun fetchToken(context: Context) {
+    open fun fetchToken(context: Context) {
         _token.value = TokenManager.getToken(context)
         getUserID()
     }
@@ -89,7 +89,7 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun fetchStore() {
+    open fun fetchStore() {
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("business").select(
