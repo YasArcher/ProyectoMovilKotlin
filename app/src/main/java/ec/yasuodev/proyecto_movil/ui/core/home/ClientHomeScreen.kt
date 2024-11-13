@@ -46,10 +46,7 @@ fun ClientHomeScreen(viewModel: HomeViewModel, navController: NavController) {
     val user by viewModel.user.observeAsState(User("", "", "", "", "", ""))
 
     Scaffold(
-        topBar = {
-            HomeTopBar(user)
-        },
-        containerColor = Color(0xFF9B86BE) // Fondo morado en toda la pantalla
+        containerColor = Color.White
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -57,33 +54,47 @@ fun ClientHomeScreen(viewModel: HomeViewModel, navController: NavController) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            ClientHomeContent(viewModel, navController, user, context)
+            Column {
+                HomeTopBar(user)
+                Spacer(modifier = Modifier.height(8.dp))
+                ClientHomeContent(viewModel, navController, user, context)
+            }
         }
     }
 }
 
 @Composable
 fun HomeTopBar(user: User) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF9B86BE))
+            .height(225.dp)
+            .background(Color(0xFF9B86BE), shape = RoundedCornerShape(bottomEnd = 125.dp, bottomStart = 125.dp)) // Fondo morado con bordes redondeados en la parte inferior
             .padding(vertical = 24.dp, horizontal = 16.dp)
     ) {
-        Text(
-            text = "Hola ${user.nickname}",
-            style = MaterialTheme.typography.bodyLarge.copy(
-                color = Color.White,
-                fontFamily = FontFamily.SansSerif
+        Column (
+            modifier = Modifier
+                .fillMaxHeight() // Llena todo el alto del Box
+            .padding(start = 38.dp),
+            verticalArrangement = Arrangement.Center // Centra el contenido verticalmente
+        ){
+            Text(
+                text = "Hola ${user.nickname}",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color(0xFFBBBBBB),
+                    fontFamily = FontFamily.SansSerif,
+                    fontSize = 20.sp
+                )
             )
-        )
-        Text(
-            text = "Inicio",
-            style = MaterialTheme.typography.headlineLarge.copy(
-                color = Color.White,
-                fontWeight = FontWeight.Bold
+            Text(
+                text = "Inicio",
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 40.sp
+                )
             )
-        )
+        }
     }
 }
 
@@ -95,20 +106,54 @@ fun ClientHomeContent(viewModel: HomeViewModel, navController: NavController, us
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
+            .offset(y = (-40).dp), // Ajuste para superponer las tarjetas con el encabezado
+        verticalArrangement = Arrangement.spacedBy(16.dp) // Espacio automático entre tarjetas
     ) {
-        // Renderiza cada tarjeta con el estilo proporcionado
-        store.let {
-            BusinessCard(it, navController, user, 1)
-            Spacer(modifier = Modifier.height(16.dp))
+        // Verifica si `store` tiene datos antes de mostrar la tarjeta
+        if (store.id.isNotBlank()) {
+            BusinessCard(store, navController, user, 1)
         }
 
+        // Renderiza cada tarjeta de la lista de `storeList` desde el ViewModel
         storeList.forEach {
             BusinessCard(it, navController, user, 2)
-            Spacer(modifier = Modifier.height(16.dp))
         }
+
+        // Tarjetas adicionales añadidas manualmente
+        BusinessCard(
+            store = Store("4", "Inventory Hub 4", "Location 4", "Description 4"),
+            navController = navController,
+            user = user,
+            tipo = 1
+        )
+        BusinessCard(
+            store = Store("5", "Inventory Hub 5", "Location 5", "Description 5"),
+            navController = navController,
+            user = user,
+            tipo = 1
+        )
+        BusinessCard(
+            store = Store("5", "Inventory Hub 5", "Location 5", "Description 5"),
+            navController = navController,
+            user = user,
+            tipo = 1
+        )
+        BusinessCard(
+            store = Store("5", "Inventory Hub 5", "Location 5", "Description 5"),
+            navController = navController,
+            user = user,
+            tipo = 1
+        )
+        BusinessCard(
+            store = Store("5", "Inventory Hub 5", "Location 5", "Description 5"),
+            navController = navController,
+            user = user,
+            tipo = 1
+        )
     }
 }
+
 
 @Composable
 fun BusinessCard(store: Store, navController: NavController, user: User, tipo: Int) {
@@ -116,9 +161,9 @@ fun BusinessCard(store: Store, navController: NavController, user: User, tipo: I
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 0.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(24.dp)
     ) {
         Row(
             modifier = Modifier
@@ -136,7 +181,7 @@ fun BusinessCard(store: Store, navController: NavController, user: User, tipo: I
                     text = "INVENTORY HUB",
                     style = MaterialTheme.typography.titleMedium.copy(
                         color = Color(0xFF9B86BE),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 )
 
@@ -179,7 +224,6 @@ fun BusinessCard(store: Store, navController: NavController, user: User, tipo: I
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
