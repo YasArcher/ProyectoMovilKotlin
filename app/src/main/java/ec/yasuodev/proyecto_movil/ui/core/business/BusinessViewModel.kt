@@ -28,21 +28,21 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class BusinessViewModel(private val context: Context) : ViewModel() {
+open class BusinessViewModel(private val context: Context) : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
     private val _store = MutableLiveData<Store>()
-    val store: LiveData<Store> = _store
+    open val store: LiveData<Store> = _store
     private val _income = MutableLiveData<Double>(0.0)
-    val income: LiveData<Double> = _income
+    open val income: LiveData<Double> = _income
     private val _expenditures = MutableLiveData<Double>(0.0)
-    val expenditures: LiveData<Double> = _expenditures
+    open val expenditures: LiveData<Double> = _expenditures
     private val _salesList = MutableLiveData<List<Sale>>(emptyList())
     val salesList: LiveData<List<Sale>> = _salesList
     private val _purchasesList = MutableLiveData<List<Purchase>>(emptyList())
-    val purchasesList: LiveData<List<Purchase>> = _purchasesList
+    open val purchasesList: LiveData<List<Purchase>> = _purchasesList
     private val _productsModel = MutableLiveData<List<AuxiliarSaleProduct>>(emptyList())
-    val productsModel: LiveData<List<AuxiliarSaleProduct>> = _productsModel
+    open val productsModel: LiveData<List<AuxiliarSaleProduct>> = _productsModel
     private val _products = MutableLiveData<List<Product>>(emptyList())
     val products: LiveData<List<Product>> = _products
     private val _showDialog = MutableLiveData<Boolean>()
