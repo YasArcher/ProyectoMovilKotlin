@@ -194,9 +194,10 @@ fun BusinessContent(
                 onDismissRequest = { expanded = false }
             ) {
                 DropdownMenuItem(onClick = {
-                    transactionType = TransactionType.SALE
-                    viewModel.showDialog(true)
-                    expanded = false
+                    //transactionType = TransactionType.SALE
+                    //viewModel.showDialog(true)
+                    //expanded = false
+                    navController.navigate("sales/${storeID}/${seller}")
                 }) {
                     Text("Agregar Venta")
                 }
