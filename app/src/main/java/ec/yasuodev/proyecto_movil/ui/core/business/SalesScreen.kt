@@ -5,18 +5,24 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+
+
 
 @Composable
 fun SalesScreen(
@@ -42,9 +48,16 @@ fun SalesContent(
     store: String,
     seller: String
 ) {
+    // Estado para controlar la visibilidad del modal
+    var showModal by remember { mutableStateOf(false) }
+    var selectedProductName by remember { mutableStateOf("") }
+    var selectedQuantity by remember { mutableStateOf(0) }
+    var selectedValue by remember { mutableStateOf(0.0) }
+
+    // Ejemplo de productos (puedes usar datos reales del ViewModel si están disponibles)
     val products = listOf(
         Product("Pan", 8, 0.96),
-        Product("Pan", 8, 0.96)
+        Product("Leche", 4, 1.20)
     )
     val total = products.sumOf { it.total }
 
@@ -53,7 +66,8 @@ fun SalesContent(
         HeaderSection(title = "Vender", total = total)
 
         Row(modifier.padding(horizontal = 16.dp)) {
-            AddButton()
+            // Cambiar AddButton para activar el modal
+            AddButton(onClick = { showModal = true })
             TotalCard(total)
         }
 
@@ -63,7 +77,25 @@ fun SalesContent(
 
         Spacer(modifier = Modifier.weight(1f))
     }
+
+    // Mostrar modal si `showModal` es true
+    if (showModal) {
+        StyledAddModal(
+            onDismiss = { showModal = false },
+            onConfirm = { productName, quantity, value ->
+                selectedProductName = productName
+                selectedQuantity = quantity
+                selectedValue = value
+                showModal = false
+
+                // Aquí puedes llamar al ViewModel para agregar el producto
+                println("Producto: $productName, Cantidad: $quantity, Valor: $value")
+            }
+        )
+    }
 }
+
+
 
 @Composable
 fun HeaderSection(title: String, total: Double) {
@@ -258,14 +290,14 @@ fun AcceptButton(onClick: () -> Unit) {
 }
 
 @Composable
-fun AddButton() {
+fun AddButton(onClick: () -> Unit) {
     Button(
-        onClick = { /* Acción para agregar */ },
+        onClick = onClick,
         modifier = Modifier.height(40.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD8A3D9))
     ) {
         Icon(
-            imageVector = Icons.Default.Add, // Icono "+"
+            imageVector = Icons.Default.Add,
             contentDescription = "Agregar",
             tint = Color.White
         )
@@ -273,5 +305,98 @@ fun AddButton() {
         Text(text = "Agregar", color = Color.White)
     }
 }
+
+@Composable
+fun StyledAddModal(
+    onDismiss: () -> Unit,
+    onConfirm: (productName: String, quantity: Int, value: Double) -> Unit,
+
+) {
+    var productName by remember { mutableStateOf("") }
+    var quantity by remember { mutableStateOf("") }
+    var value by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = {
+            Text(
+                text = "Agregar",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF5A005A)
+                ),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        },
+        text = {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White, // Fondo blanco
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Campo de búsqueda de productos
+                    OutlinedTextField(
+                        value = productName,
+                        onValueChange = { productName = it },
+                        label = { Text("Productos") },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Buscar",
+                                tint = Color(0xFF7A0097)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Nombre del Producto
+                    OutlinedTextField(
+                        value = productName,
+                        onValueChange = { productName = it },
+                        label = { Text("Nombre del Producto") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Cantidad
+                    OutlinedTextField(
+                        value = quantity,
+                        onValueChange = { quantity = it },
+                        label = { Text("Cantidad") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Valor
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = { value = it },
+                        label = { Text("Valor") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val parsedQuantity = quantity.toIntOrNull() ?: 0
+                    val parsedValue = value.toDoubleOrNull() ?: 0.0
+                    onConfirm(productName, parsedQuantity, parsedValue)
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5A005A)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Agregar", color = Color.White)
+            }
+        },
+        modifier = Modifier.padding(16.dp)
+    )
+}
+
 
 data class Product(val name: String, val quantity: Int, val total: Double)
