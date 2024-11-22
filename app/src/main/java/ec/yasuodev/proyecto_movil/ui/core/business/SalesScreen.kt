@@ -48,8 +48,9 @@ fun SalesContent(
     store: String,
     seller: String
 ) {
-    // Estado para controlar la visibilidad del modal
+    // Estados para controlar el modal
     var showModal by remember { mutableStateOf(false) }
+    var isEditing by remember { mutableStateOf(false) }
     var selectedProductName by remember { mutableStateOf("") }
     var selectedQuantity by remember { mutableStateOf(0) }
     var selectedValue by remember { mutableStateOf(0.0) }
@@ -66,34 +67,59 @@ fun SalesContent(
         HeaderSection(title = "Vender", total = total)
 
         Row(modifier.padding(horizontal = 16.dp)) {
-            // Cambiar AddButton para activar el modal
-            AddButton(onClick = { showModal = true })
+            // Botón para abrir el modal en modo agregar
+            AddButton(onClick = {
+                isEditing = false // Modo agregar
+                selectedProductName = ""
+                selectedQuantity = 0
+                selectedValue = 0.0
+                showModal = true
+            })
             TotalCard(total)
         }
 
         // Tabla de productos
         Spacer(modifier = Modifier.height(16.dp))
-        ProductsTable(products)
+        ProductsTable(
+            products = products,
+            onEditClick = { product ->
+                isEditing = true // Modo edición
+                selectedProductName = product.name
+                selectedQuantity = product.quantity
+                selectedValue = product.total
+                showModal = true
+            },
+            onDeleteClick = { product ->
+                // Aquí puedes manejar la eliminación del producto
+                println("Eliminar producto: ${product.name}")
+            }
+        )
 
         Spacer(modifier = Modifier.weight(1f))
     }
 
-    // Mostrar modal si `showModal` es true
+    // Mostrar el modal si `showModal` es true
     if (showModal) {
         StyledAddModal(
+            isEditing = isEditing,
+            productName = selectedProductName,
+            quantity = selectedQuantity,
+            value = selectedValue,
             onDismiss = { showModal = false },
             onConfirm = { productName, quantity, value ->
-                selectedProductName = productName
-                selectedQuantity = quantity
-                selectedValue = value
+                if (isEditing) {
+                    // Lógica para guardar cambios al editar
+                    println("Producto actualizado: $productName, Cantidad: $quantity, Valor: $value")
+                } else {
+                    // Lógica para agregar un producto nuevo
+                    println("Producto agregado: $productName, Cantidad: $quantity, Valor: $value")
+                }
                 showModal = false
-
-                // Aquí puedes llamar al ViewModel para agregar el producto
-                println("Producto: $productName, Cantidad: $quantity, Valor: $value")
             }
         )
     }
 }
+
 
 
 
@@ -138,8 +164,9 @@ fun TotalCard(total: Double) {
         )
     }
 }
+
 @Composable
-fun ProductsTable(products: List<Product>) {
+fun ProductsTable(products: List<Product>, onEditClick: (Product) -> Unit, onDeleteClick: (Product) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -148,7 +175,6 @@ fun ProductsTable(products: List<Product>) {
     ) {
         Spacer(modifier = Modifier.height(15.dp))
 
-        // Encabezado de la tabla
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -163,23 +189,15 @@ fun ProductsTable(products: List<Product>) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Filas de productos en un LazyColumn
         LazyColumn(
-            modifier = Modifier.weight(1f) // Ocupa el espacio restante
+            modifier = Modifier.weight(1f)
         ) {
             items(products) { product ->
-                ProductRow(product)
-            }
-        }
-
-        // Botón Aceptar fijo al final
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) {
-            AcceptButton {
-                // Acción para aceptar la venta
+                ProductRow(
+                    product = product,
+                    onEditClick = onEditClick,
+                    onDeleteClick = onDeleteClick
+                )
             }
         }
     }
@@ -204,88 +222,54 @@ fun TableHeaderCell(text: String, modifier: Modifier) {
 }
 
 @Composable
-fun ProductRow(product: Product) {
+fun ProductRow(product: Product, onEditClick: (Product) -> Unit, onDeleteClick: (Product) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 8.dp) // Espaciado alrededor de cada fila
-            .background(Color(0xFF3C1F62), shape = RoundedCornerShape(8.dp)) // Fondo morado con bordes redondeados
-            .padding(horizontal = 12.dp, vertical = 8.dp), // Padding interno
-        verticalAlignment = Alignment.CenterVertically // Alinear el contenido verticalmente al centro
+            .padding(vertical = 4.dp, horizontal = 8.dp)
+            .background(Color(0xFF3C1F62), shape = RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = product.name,
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 8.dp), // Ajuste para alineación uniforme
+            modifier = Modifier.weight(1f),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
             text = "${product.quantity}",
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 8.dp), // Ajuste para alineación uniforme
+            modifier = Modifier.weight(1f),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
             text = "%.2f".format(product.total),
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 8.dp), // Ajuste para alineación uniforme
+            modifier = Modifier.weight(1f),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
         Row(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.SpaceEvenly, // Distribuir equitativamente los botones
-            verticalAlignment = Alignment.CenterVertically // Alineación vertical para los íconos
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Botón de Editar con fondo circular
-            Box(
-                modifier = Modifier
-                    .size(30.dp) // Tamaño del círculo
-                    .background(Color(0xFFD8A3D9), shape = RoundedCornerShape(50)) // Fondo morado claro con forma circular
-                    .padding(4.dp), // Padding interno del círculo
-                contentAlignment = Alignment.Center // Alinear el ícono al centro
-            ) {
+            IconButton(onClick = { onEditClick(product) }) {
                 Icon(
                     imageVector = Icons.Filled.Edit,
                     contentDescription = "Editar",
-                    tint = Color(0xFF3C1F62) // Ícono en blanco
+                    tint = Color.White
                 )
             }
 
-            // Botón de Eliminar con fondo circular
-            Box(
-                modifier = Modifier
-                    .size(30.dp) // Tamaño del círculo
-                    .background(Color(0xFFD8A3D9), shape = RoundedCornerShape(50)) // Fondo rosa claro con forma circular
-                    .padding(4.dp), // Padding interno del círculo
-                contentAlignment = Alignment.Center // Alinear el ícono al centro
-            ) {
+            IconButton(onClick = { onDeleteClick(product) }) {
                 Icon(
                     imageVector = Icons.Filled.Delete,
                     contentDescription = "Eliminar",
-                    tint = Color(0xFF3C1F62) // Ícono en blanco
+                    tint = Color.White
                 )
             }
         }
-    }
-}
-
-@Composable
-fun AcceptButton(onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .height(48.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7A0097))
-    ) {
-        Text("Aceptar", color = Color.White)
     }
 }
 
@@ -308,19 +292,23 @@ fun AddButton(onClick: () -> Unit) {
 
 @Composable
 fun StyledAddModal(
+    isEditing: Boolean, // Nuevo parámetro para determinar si estamos editando
+    productName: String = "", // Nombre del producto para edición
+    quantity: Int = 0, // Cantidad del producto para edición
+    value: Double = 0.0, // Valor del producto para edición
     onDismiss: () -> Unit,
-    onConfirm: (productName: String, quantity: Int, value: Double) -> Unit,
-
+    onConfirm: (productName: String, quantity: Int, value: Double) -> Unit
 ) {
-    var productName by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("") }
-    var value by remember { mutableStateOf("") }
+    // Estados inicializados con los valores proporcionados
+    var editableProductName by remember { mutableStateOf(productName) }
+    var editableQuantity by remember { mutableStateOf(quantity.toString()) }
+    var editableValue by remember { mutableStateOf(value.toString()) }
 
     AlertDialog(
         onDismissRequest = { onDismiss() },
         title = {
             Text(
-                text = "Agregar",
+                text = if (isEditing) "Editar Producto" else "Agregar Producto", // Cambia el título dinámicamente
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF5A005A)
@@ -340,42 +328,29 @@ fun StyledAddModal(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Campo de búsqueda de productos
+                    // Campo de nombre del producto
                     OutlinedTextField(
-                        value = productName,
-                        onValueChange = { productName = it },
-                        label = { Text("Productos") },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Buscar",
-                                tint = Color(0xFF7A0097)
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    // Nombre del Producto
-                    OutlinedTextField(
-                        value = productName,
-                        onValueChange = { productName = it },
+                        value = editableProductName,
+                        onValueChange = { editableProductName = it },
                         label = { Text("Nombre del Producto") },
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Cantidad
+                    // Campo de cantidad
                     OutlinedTextField(
-                        value = quantity,
-                        onValueChange = { quantity = it },
+                        value = editableQuantity,
+                        onValueChange = { editableQuantity = it },
                         label = { Text("Cantidad") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Valor
+                    // Campo de valor
                     OutlinedTextField(
-                        value = value,
-                        onValueChange = { value = it },
+                        value = editableValue,
+                        onValueChange = { editableValue = it },
                         label = { Text("Valor") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -384,19 +359,20 @@ fun StyledAddModal(
         confirmButton = {
             Button(
                 onClick = {
-                    val parsedQuantity = quantity.toIntOrNull() ?: 0
-                    val parsedValue = value.toDoubleOrNull() ?: 0.0
-                    onConfirm(productName, parsedQuantity, parsedValue)
+                    val parsedQuantity = editableQuantity.toIntOrNull() ?: 0
+                    val parsedValue = editableValue.toDoubleOrNull() ?: 0.0
+                    onConfirm(editableProductName, parsedQuantity, parsedValue) // Llamada a onConfirm
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5A005A)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Agregar", color = Color.White)
+                Text(if (isEditing) "Guardar Cambios" else "Agregar", color = Color.White) // Botón dinámico
             }
         },
         modifier = Modifier.padding(16.dp)
     )
 }
+
 
 
 data class Product(val name: String, val quantity: Int, val total: Double)
