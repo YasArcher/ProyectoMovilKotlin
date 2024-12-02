@@ -113,7 +113,7 @@ fun BusinessContent(
                 style = MaterialTheme.typography.titleLarge.copy(color = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.padding(15.dp),
             )
-            StatsCard(modifier, viewModel)
+            StatsCard(modifier, viewModel, navController )
             Spacer(modifier = Modifier.padding(10.dp))
             Column(modifier.fillMaxSize()) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -238,7 +238,7 @@ fun BusinessContent(
 }
 
 @Composable
-fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel) {
+fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel, navController: NavController) {
     val income by viewModel.income.observeAsState(0.0)
     val expenditures by viewModel.expenditures.observeAsState(0.0)
 
@@ -248,7 +248,10 @@ fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel) {
             .padding(horizontal = 20.dp, vertical = 8.dp)
             .background(MaterialTheme.colorScheme.background)
             .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
-            .clickable { },
+            .clickable {
+                // Navegar a la nueva vista
+                navController.navigate("reporteria") // Reemplaza "new_view_route" por tu ruta configurada
+            },
         contentAlignment = Alignment.Center
     ) {
         ElevatedCard(
@@ -283,6 +286,7 @@ fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel) {
         }
     }
 }
+
 
 @Composable
 fun StatItem(label: String, amount: Double, color: Color) {
