@@ -32,7 +32,7 @@ import ec.yasuodev.proyecto_movil.R
 import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import ec.yasuodev.proyecto_movil.ui.shared.models.User
-
+//a
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
