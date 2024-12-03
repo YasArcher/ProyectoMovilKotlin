@@ -121,7 +121,7 @@ fun BusinessScreen(
                             )
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        StatsCard(modifier = Modifier.padding(horizontal = 16.dp), viewModel)
+                        StatsCard(modifier = Modifier.padding(horizontal = 16.dp), viewModel, navController)
                     }
                 }
 
