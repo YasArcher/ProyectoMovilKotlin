@@ -22,6 +22,8 @@ import ec.yasuodev.proyecto_movil.ui.auth.reset.ResetScreen
 import ec.yasuodev.proyecto_movil.ui.auth.reset.ResetViewModel
 import ec.yasuodev.proyecto_movil.ui.core.business.BusinessScreen
 import ec.yasuodev.proyecto_movil.ui.core.business.BusinessViewModel
+import ec.yasuodev.proyecto_movil.ui.core.business.SalesScreen
+import ec.yasuodev.proyecto_movil.ui.core.business.SalesViewModel
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeViewModel
 import ec.yasuodev.proyecto_movil.ui.core.manager.ManagerScreen
@@ -131,6 +133,17 @@ fun AppNavGraph() {
             )) { backStackEntry ->
                 BusinessScreen(
                     BusinessViewModel(context),
+                    navController,
+                    backStackEntry.arguments?.getString("store") ?: "",
+                    backStackEntry.arguments?.getString("seller") ?: ""
+                )
+            }
+            composable("sales/{store}/{seller}", arguments = listOf(
+                navArgument("store") { type = NavType.StringType },
+                navArgument("seller") { type = NavType.StringType }
+            )) { backStackEntry ->
+                SalesScreen(
+                    SalesViewModel(context),
                     navController,
                     backStackEntry.arguments?.getString("store") ?: "",
                     backStackEntry.arguments?.getString("seller") ?: ""
