@@ -24,6 +24,7 @@ import ec.yasuodev.proyecto_movil.ui.core.business.BusinessScreen
 import ec.yasuodev.proyecto_movil.ui.core.business.BusinessViewModel
 import ec.yasuodev.proyecto_movil.ui.core.business.SalesScreen
 import ec.yasuodev.proyecto_movil.ui.core.business.SalesViewModel
+import ec.yasuodev.proyecto_movil.ui.core.business.ReportingScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeViewModel
 import ec.yasuodev.proyecto_movil.ui.core.manager.ManagerScreen
@@ -148,6 +149,9 @@ fun AppNavGraph() {
                     backStackEntry.arguments?.getString("store") ?: "",
                     backStackEntry.arguments?.getString("seller") ?: ""
                 )
+            }
+            composable("reporteria"){
+                ReportingScreen()
             }
         }
     }

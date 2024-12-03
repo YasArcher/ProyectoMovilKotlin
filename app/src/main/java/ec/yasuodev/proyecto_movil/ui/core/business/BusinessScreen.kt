@@ -156,6 +156,12 @@ fun BusinessContent(
     Box(modifier.fillMaxSize()
         .background(Color.White)) {
         Column(modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "Bienvenido a ${store.name}",
+                style = MaterialTheme.typography.titleLarge.copy(color = MaterialTheme.colorScheme.primary),
+                modifier = Modifier.padding(15.dp),
+            )
+            StatsCard(modifier, viewModel, navController )
 
             Spacer(modifier = Modifier.padding(10.dp))
             Column(modifier.fillMaxSize()) {
@@ -416,7 +422,7 @@ fun BusinessContent(
 }
 
 @Composable
-fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel) {
+fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel, navController: NavController) {
     val income by viewModel.income.observeAsState(0.0)
     val expenditures by viewModel.expenditures.observeAsState(0.0)
 
@@ -424,8 +430,12 @@ fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel) {
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 8.dp)
-            .background(Color(0xFF9B86BE))
-            .clickable { },
+            .background(MaterialTheme.colorScheme.background)
+            .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
+            .clickable {
+                // Navegar a la nueva vista
+                navController.navigate("reporteria") // Reemplaza "new_view_route" por tu ruta configurada
+            },
         contentAlignment = Alignment.Center
     ) {
         ElevatedCard(
@@ -460,6 +470,7 @@ fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel) {
         }
     }
 }
+
 
 @Composable
 fun StatItem(label: String, amount: Double, color: Color) {
@@ -1062,20 +1073,21 @@ fun PurchaseCard(purchase: Purchase, viewModel: BusinessViewModel) {
                             ).show()
                         }
                     }
-                },
-                modifier = Modifier.size(24.dp)
+                    viewModel.deletePurchase(purchase.id)
+                }
             ) {
-                Icon(
-                    Icons.Filled.Delete,
-                    contentDescription = "Eliminar",
-                    tint =  Color(0xFF72BF85),
-                    modifier = Modifier.size(24.dp)
-                )
+                Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
+            }
+            IconButton(
+                onClick = {
+                    showEditDialog = true
+                }
+            ) {
+                Icon(Icons.Filled.Edit, contentDescription = "Editar")
             }
         }
     }
 }
-
 
 @Composable
 fun EditPurchaseDialog(
