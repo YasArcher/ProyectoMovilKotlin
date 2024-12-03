@@ -1,5 +1,6 @@
 package ec.yasuodev.proyecto_movil.ui.core.business
 
+import android.content.Context
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -37,6 +39,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -64,6 +67,14 @@ import ec.yasuodev.proyecto_movil.ui.shared.models.Purchase
 import ec.yasuodev.proyecto_movil.ui.shared.models.Sale
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import kotlinx.coroutines.launch
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.navigation.compose.rememberNavController
 
 enum class TransactionType {
     SALE, PURCHASE
@@ -77,14 +88,50 @@ fun BusinessScreen(
     store: String,
     seller: String
 ) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        BusinessContent(viewModel, navController, Modifier, store, seller)
+    Scaffold(
+        containerColor = Color(0xFFF5F5F5) // Fondo claro
+    ) { innerPadding ->
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Column {
+                // Cabecera morada con texto y carta de estadísticas
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp) // Ajusta la altura para incluir la carta
+                        .background(
+                            color = Color(0xFF9B86BE),
+                            shape = RoundedCornerShape(bottomStart = 60.dp, bottomEnd = 60.dp)
+                        ),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(top = 40.dp)
+                    ) {
+                        Text(
+                            text = "Transacciones",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                color = Color.White,
+                                fontSize = 40.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        StatsCard(modifier = Modifier.padding(horizontal = 16.dp), viewModel)
+                    }
+                }
+
+                // Contenido principal
+                BusinessContent(viewModel, navController, Modifier, store, seller)
+            }
+        }
     }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -106,76 +153,206 @@ fun BusinessContent(
         viewModel.getExpendituresByDate(storeID, dateToday)
     }
 
-    Box(modifier.fillMaxSize()) {
+    Box(modifier.fillMaxSize()
+        .background(Color.White)) {
         Column(modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Bienvenido a ${store.name}",
-                style = MaterialTheme.typography.titleLarge.copy(color = MaterialTheme.colorScheme.primary),
-                modifier = Modifier.padding(15.dp),
-            )
-            StatsCard(modifier, viewModel)
+
             Spacer(modifier = Modifier.padding(10.dp))
             Column(modifier.fillMaxSize()) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Productos vendidos hoy", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        text = "Productos vendidos hoy",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontSize = 18.sp // Tamaño de fuente ajustado
+                        ),
+                        color = Color(0xFF6A3D98),
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
                     Spacer(modifier = Modifier.padding(10.dp))
+
+                    // Encabezado de la tabla con elementos separados y bordes redondeados
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 4.dp)
                     ) {
-                        Text(
-                            text = "Producto",
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1.3f)
-                        )
-                        Text(
-                            text = "Cantidad",
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1.4f)
-                        )
-                        Text(
-                            text = "Total",
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1.3f)
-                        )
-                        Text(
-                            text = "Acciones",
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1.5f)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .background(
+                                    color =  Color(0xFF363062),
+                                    shape = RoundedCornerShape(16.dp) // Bordes redondeados
+                                )
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Producto",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(horizontal = 3.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp)) // Separación entre encabezados
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .background(
+                                    color = Color(0xFF363062),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Cantidad",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp)) // Separación entre encabezados
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .background(
+                                    color =  Color(0xFF363062),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Total",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp)) // Separación entre encabezados
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1.5f)
+                                .background(
+                                    color =  Color(0xFF363062),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Acciones",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.padding(5.dp))
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Lista de productos
                     SalesList(viewModel = viewModel, modifier = modifier)
                 }
+
                 Spacer(modifier = Modifier.padding(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Egresos del día", style = MaterialTheme.typography.titleSmall)
+                    Text(text = "Egresos del día", style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = 18.sp // Tamaño de fuente ajustado
+                    ), color = Color(0xFF6A3D98))
                     Spacer(modifier = Modifier.padding(10.dp))
+
+                    // Encabezado de la tabla con elementos separados y bordes redondeados
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 4.dp)
                     ) {
-                        Text(
-                            text = "Razon",
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1.3f)
-                        )
-                        Text(
-                            text = "Valor",
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1.4f)
-                        )
-                        Text(
-                            text = "Acciones",
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .background(
+                                    color =  Color(0xFF363062),
+                                    shape = RoundedCornerShape(16.dp) // Bordes redondeados
+                                )
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Razón",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp)) // Separación entre encabezados
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .background(
+                                    color =  Color(0xFF363062),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Valor",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp)) // Separación entre encabezados
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(
+                                    color = Color(0xFF363062)   ,
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Acciones",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
                     }
+
                     Spacer(modifier = Modifier.padding(5.dp))
+
+                    // Lista de egresos
                     PurchasesList(viewModel = viewModel, modifier = modifier)
                 }
+
             }
         }
         Box(
@@ -246,8 +423,7 @@ fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel) {
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 8.dp)
-            .background(MaterialTheme.colorScheme.background)
-            .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
+            .background(Color(0xFF9B86BE))
             .clickable { },
         contentAlignment = Alignment.Center
     ) {
@@ -257,7 +433,7 @@ fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(1.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(24.dp))
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -276,7 +452,7 @@ fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem("Ingresos", income, Color(0xFF388E3C))
+                    StatItem("Ingresos", income,  Color(0xFF72BF85))
                     StatItem("Egresos", expenditures, Color.Red)
                 }
             }
@@ -317,9 +493,11 @@ fun SalesList(
 ) {
     val productsModel by viewModel.productsModel.observeAsState(emptyList())
     ElevatedCard(
-        modifier = modifier.fillMaxWidth(),
+
+        modifier = modifier.fillMaxWidth().background( color = Color(0xFF9B86BE)),
         elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RectangleShape
     ) {
         LazyColumn {
             items(productsModel) { product ->
@@ -335,6 +513,7 @@ fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
     var showEditDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+
     if (showEditDialog) {
         EditSaleDialog(
             viewModel = viewModel,
@@ -342,35 +521,59 @@ fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
             onDismiss = { showEditDialog = false })
     }
 
-    Card(
+    Column(
+
         modifier = Modifier
-            .padding(vertical = 8.dp, horizontal = 16.dp)
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(2.dp)
+            .fillMaxWidth()
+            .background(Color.White) // Fondo blanco para cada fila
     ) {
+        // Línea superior morada
+        Divider(color = Color(0xFF9B86BE), thickness = 1.dp)
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Texto del Producto
             Text(
                 text = product.productName,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color =  Color(0xFF363062),
                 modifier = Modifier.weight(1.5f)
             )
+
+            // Cantidad
             Text(
                 text = "${product.quantity}",
                 style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF363062),
                 modifier = Modifier.weight(1f)
             )
+
+            // Total
             Text(
                 text = "${product.total.format(2)}",
                 style = MaterialTheme.typography.bodyMedium,
+                color =  Color(0xFF363062),
                 modifier = Modifier.weight(1f)
             )
+
+            // Botón de Editar
+            IconButton(
+                onClick = { showEditDialog = true },
+                modifier = Modifier.size(24.dp) // Tamaño del icono más pequeño
+            ) {
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = "Editar",
+                    tint =  Color(0xFF72BF85), // Color verde similar al icono de la imagen
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            // Botón de Eliminar
             IconButton(
                 onClick = {
                     coroutineScope.launch {
@@ -383,20 +586,21 @@ fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
                         }
                     }
                     viewModel.deleteSaleProduct(product.id)
-                }
+                },
+                modifier = Modifier.size(24.dp)
             ) {
-                Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
-            }
-            IconButton(
-                onClick = {
-                    showEditDialog = true
-                }
-            ) {
-                Icon(Icons.Filled.Edit, contentDescription = "Editar")
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Eliminar",
+                    tint =  Color(0xFF72BF85),
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }
 }
+
+
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -779,25 +983,21 @@ fun PurchasesList(
     modifier: Modifier,
 ) {
     val purchasesList by viewModel.purchasesList.observeAsState(emptyList())
-    ElevatedCard(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    LazyColumn(
+        modifier = modifier.fillMaxWidth()
     ) {
-        LazyColumn {
-            items(purchasesList) { purchase ->
-                PurchaseCard(purchase, viewModel = viewModel)
-            }
+        items(purchasesList) { purchase ->
+            PurchaseCard(purchase, viewModel = viewModel)
         }
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PurchaseCard(purchase: Purchase, viewModel: BusinessViewModel) {
     var showEditDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+
     if (showEditDialog) {
         EditPurchaseDialog(
             viewModel = viewModel,
@@ -806,30 +1006,50 @@ fun PurchaseCard(purchase: Purchase, viewModel: BusinessViewModel) {
         )
     }
 
-    Card(
+    Column(
         modifier = Modifier
-            .padding(vertical = 8.dp, horizontal = 16.dp)
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(2.dp)
+            .fillMaxWidth()
+            .background(Color.White) // Fondo blanco para cada fila
     ) {
+        // Línea superior morada
+        Divider(color = Color(0xFF9B86BE), thickness = 1.dp)
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Texto de Razón
             Text(
                 text = purchase.reason,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color =  Color(0xFF363062),
                 modifier = Modifier.weight(1.5f)
             )
+
+            // Valor
             Text(
-                text = "${purchase.amount.format(2)}",
+                text = "${purchase.amount}",
                 style = MaterialTheme.typography.bodyMedium,
+                color =  Color(0xFF363062),
                 modifier = Modifier.weight(1f)
             )
+
+            // Botón de Editar
+            IconButton(
+                onClick = { showEditDialog = true },
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = "Editar",
+                    tint =  Color(0xFF72BF85), // Color verde similar al icono en SaleCard
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            // Botón de Eliminar
             IconButton(
                 onClick = {
                     coroutineScope.launch {
@@ -841,21 +1061,20 @@ fun PurchaseCard(purchase: Purchase, viewModel: BusinessViewModel) {
                             ).show()
                         }
                     }
-                    viewModel.deletePurchase(purchase.id)
-                }
+                },
+                modifier = Modifier.size(24.dp)
             ) {
-                Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
-            }
-            IconButton(
-                onClick = {
-                    showEditDialog = true
-                }
-            ) {
-                Icon(Icons.Filled.Edit, contentDescription = "Editar")
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Eliminar",
+                    tint =  Color(0xFF72BF85),
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }
 }
+
 
 @Composable
 fun EditPurchaseDialog(
@@ -963,5 +1182,60 @@ fun EditPurchaseDialog(
             }
         },
         dismissButton = {}
+    )
+}
+
+
+class FakeBusinessViewModel(context: Context) : BusinessViewModel(context) {
+    override val store: LiveData<Store> = MutableLiveData(Store("1", "Tienda de Prueba", "Ubicación", "Descripción"))
+    override val income: LiveData<Double> = MutableLiveData(1000.0)
+    override val expenditures: LiveData<Double> = MutableLiveData(500.0)
+    override val productsModel: LiveData<List<AuxiliarSaleProduct>> = MutableLiveData(
+        listOf(
+            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
+            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
+            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
+            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
+            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
+            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
+            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
+
+
+        )
+    )
+    override val purchasesList: LiveData<List<Purchase>> = MutableLiveData(
+        listOf(
+            Purchase(
+                id = "1",
+                reason = "Razón A",
+                created_at = "2023-01-01", // Ejemplo de fecha
+                business_id = "business_id_123", // ID del negocio
+                amount = 30.0 // Cantidad del egreso
+            ),
+            Purchase(
+                id = "2",
+                reason = "Razón B",
+                created_at = "2023-01-02",
+                business_id = "business_id_456",
+                amount = 20.0
+            )
+        )
+    )
+
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Preview(showBackground = true)
+@Composable
+fun BusinessScreenPreview() {
+    val navController = rememberNavController()
+    val context = LocalContext.current
+    val fakeViewModel = FakeBusinessViewModel(context)
+
+    BusinessScreen(
+        viewModel = fakeViewModel,
+        navController = navController,
+        store = "1",
+        seller = "seller"
     )
 }
