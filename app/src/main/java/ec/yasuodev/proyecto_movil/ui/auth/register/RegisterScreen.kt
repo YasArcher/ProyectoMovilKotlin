@@ -202,20 +202,19 @@ fun RegisterContent(viewModel: RegisterViewModel, navController: NavController) 
                             Toast.makeText(context, "Registrando usuario", Toast.LENGTH_SHORT).show()
                         }
                         viewModel.onRegiserSelected().apply {
-                            if (registerSuccess) {
-                                Toast.makeText(
-                                    context,
-                                    (userState as UserState.Success).message,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                navController.navigate("login")
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    (userState as UserState.Error).message,
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                            when (val state = userState) {
+                                is UserState.Success -> {
+                                    Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                                    navController.navigate("login")
+                                }
+                                is UserState.Error -> {
+                                    Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                                }
+                                else -> {
+                                    Toast.makeText(context, "Cargando...", Toast.LENGTH_SHORT).show()
+                                }
                             }
+
                         }
                     }
                 },
