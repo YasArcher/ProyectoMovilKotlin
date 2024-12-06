@@ -112,6 +112,8 @@ class RegisterViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             try {
+                println("Registrando usuario con email: $email y password: $password")
+
                 SupabaseClient.client.auth.signUpWith(Email) {
                     this.email = email
                     this.password = password
