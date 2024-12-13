@@ -196,14 +196,14 @@ fun BusinessCard(store: Store, navController: NavController, user: User, tipo: I
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ClientHomeScreenPreview() {
-    val navController = rememberNavController()
-    val fakeViewModel = object : HomeViewModel() {
-        override fun fetchStore() {}
-        override fun fetchToken(context: Context) {}
-        // Aquí podrías agregar datos simulados si es necesario
-    }
-    ClientHomeScreen(viewModel = fakeViewModel, navController = navController)
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun ClientHomeScreenPreview() {
+//    val navController = rememberNavController()
+//    val fakeViewModel = object : HomeViewModel() {
+//        override fun fetchStore() {}
+//        override fun fetchToken(context: Context) {}
+//        // Aquí podrías agregar datos simulados si es necesario
+//    }
+//    ClientHomeScreen(viewModel = fakeViewModel, navController = navController)
+//}

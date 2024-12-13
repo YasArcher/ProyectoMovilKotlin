@@ -30,18 +30,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -88,6 +91,10 @@ fun BusinessScreen(
     store: String,
     seller: String
 ) {
+    val storee by viewModel.store.observeAsState(Store("", "", "", ""))
+    LaunchedEffect(key1 = viewModel) {
+        viewModel.fetchBusiness(store)
+    }
     Scaffold(
         containerColor = Color(0xFFF5F5F5) // Fondo claro
     ) { innerPadding ->
@@ -112,14 +119,29 @@ fun BusinessScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(top = 40.dp)
                     ) {
-                        Text(
-                            text = "Transacciones",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                color = Color.White,
-                                fontSize = 40.sp,
-                                fontWeight = FontWeight.Bold,
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Spacer(modifier = Modifier.width(4.dp)) // Espacio entre el texto y el ícono
+                            IconButton(onClick = {
+                                navController.navigate("edit_business_profile/${storee.id}")
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "Más opciones",
+                                    tint = Color.White // Cambia el color si es necesario
+                                )
+                            }
+                            Text(
+                                text = "Transacciones",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    color = Color.White,
+                                    fontSize = 40.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
                             )
-                        )
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
                         StatsCard(modifier = Modifier.padding(horizontal = 16.dp), viewModel, navController)
                     }

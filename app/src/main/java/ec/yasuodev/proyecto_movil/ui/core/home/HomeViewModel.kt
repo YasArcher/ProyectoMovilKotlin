@@ -7,8 +7,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenDecoding
 import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
+import ec.yasuodev.proyecto_movil.ui.core.models.AddState
+import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import ec.yasuodev.proyecto_movil.ui.shared.models.User
+import ec.yasuodev.proyecto_movil.ui.shared.models.generateUUID
 import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
@@ -23,6 +26,14 @@ open class HomeViewModel : ViewModel() {
     val _userID = MutableLiveData<String>()
     private val _store = MutableLiveData<Store>()
     private val _storeList = MutableLiveData<List<Store>>()
+    private val _addState = MutableLiveData<AddState>()
+    val addState: LiveData<AddState> = _addState
+    private val _name = MutableLiveData<String>()
+    val name: LiveData<String> = _name
+    private val _owner = MutableLiveData<String>()
+    val owner: LiveData<String> = _owner
+    private val _business_image = MutableLiveData<String>()
+    val business_image: LiveData<String> = _business_image
 
     val token: LiveData<String> = _token
     val user: LiveData<User> = _user
@@ -31,13 +42,39 @@ open class HomeViewModel : ViewModel() {
     val storeList: LiveData<List<Store>> = _storeList
 
 
-    open fun fetchToken(context: Context) {
+    open fun fetchToken(context: Context):String? {
         _token.value = TokenManager.getToken(context)
         getUserID()
+        return _userID.value.toString()
     }
 
     suspend fun loading() {
         delay(4000)
+    }
+
+    fun addStore(name: String, context: Context) {
+        val userId = fetchToken(context)
+        viewModelScope.launch {
+            if (name.isEmpty()) {
+                _addState.value = AddState.Error("El nombre de la tienda no puede estar vacío")
+                return@launch
+            } else {
+                val store = Store(
+                    id = generateUUID(),
+                    name = name,
+                    owner = userId.toString(),
+                    business_image = ""
+                )
+                try {
+                    SupabaseClient.client.from("business").insert(
+                        store
+                    )
+                    _addState.value = AddState.Success("Tienda agregada")
+                } catch (e: Exception) {
+                    _addState.value = AddState.Error("Error al agregar la tienda")
+                }
+            }
+        }
     }
 
     private fun getUserID() {

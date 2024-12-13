@@ -22,6 +22,10 @@ import ec.yasuodev.proyecto_movil.ui.auth.reset.ResetScreen
 import ec.yasuodev.proyecto_movil.ui.auth.reset.ResetViewModel
 import ec.yasuodev.proyecto_movil.ui.core.business.BusinessScreen
 import ec.yasuodev.proyecto_movil.ui.core.business.BusinessViewModel
+import ec.yasuodev.proyecto_movil.ui.core.business.ProfileBusinessScreen
+import ec.yasuodev.proyecto_movil.ui.core.business.ProfileBusinessViewModel
+import ec.yasuodev.proyecto_movil.ui.core.business.ProfileEditBusinessScreen
+import ec.yasuodev.proyecto_movil.ui.core.business.ProfileEditBusinessViewModel
 import ec.yasuodev.proyecto_movil.ui.core.business.SalesScreen
 import ec.yasuodev.proyecto_movil.ui.core.business.SalesViewModel
 import ec.yasuodev.proyecto_movil.ui.core.business.ReportingScreen
@@ -169,6 +173,18 @@ fun AppNavGraph() {
             }
             composable("reporteria"){
                 ReportingScreen()
+            }
+            composable("business_profile/{store}", arguments = listOf(
+                navArgument("store") { type = NavType.StringType }))
+            {backStackEntry ->
+                ProfileBusinessScreen(navController, ProfileBusinessViewModel(context),
+                    backStackEntry.arguments?.getString("store")?:"")
+            }
+            composable("edit_business_profile/{store}", arguments = listOf(
+                navArgument("store") { type = NavType.StringType }))
+            {backStackEntry ->
+                ProfileEditBusinessScreen(navController, ProfileEditBusinessViewModel(context),
+                    backStackEntry.arguments?.getString("store")?:"")
             }
         }
     }
