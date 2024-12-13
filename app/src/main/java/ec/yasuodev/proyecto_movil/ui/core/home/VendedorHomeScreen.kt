@@ -43,6 +43,7 @@ fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
         }
         viewModel.fetchToken(context)
         viewModel.fetchStore()
+       viewModel.fetchUniqueStore()
     }
     val user by viewModel.user.observeAsState(User("", "", "", "", "", ""))
 
@@ -69,8 +70,9 @@ fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp) // Aplica el padding deseado aquí
                 ) {
+                    val store by viewModel.store.observeAsState(Store("", "", "", "")) // Observa el estado de la tienda
                     VendedorBusinessCard(
-                        store = Store("manual_id", "Manual Business", "Manual Location", "Manual Description"),
+                        store = if (store.id.isNotBlank()) store else Store("", "Configure su negocio", "", ""),
                         navController = navController,
                         user = user,
                         tipo = 1 // Puedes cambiar el tipo para aplicar un borde si deseas
@@ -185,8 +187,11 @@ fun VendedorTopBar(user: User) {
 
 @Composable
 fun VendedorHomeContent(viewModel: HomeViewModel, navController: NavController, user: User, context: Context) {
-    val store by viewModel.store.observeAsState(Store("", "", "", ""))
-    val storeList by viewModel.storeList.observeAsState(listOf())
+    val store by viewModel.store.observeAsState(null) // Observa la tienda principal
+    val storeList by viewModel.storeList.observeAsState(listOf()) // Observa la lista de negocios
+
+    // Filtra los negocios para excluir el negocio principal
+    val filteredStoreList = storeList.filter { it.id != store?.id }
 
     Column(
         modifier = Modifier
@@ -194,54 +199,35 @@ fun VendedorHomeContent(viewModel: HomeViewModel, navController: NavController, 
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (store.id.isNotBlank()) {
-            VendedorBusinessCard(store, navController, user, 1)
+        // Tarjetas para otras tiendas (en "Otros Negocios")
+        if (filteredStoreList.isNotEmpty()) {
+            filteredStoreList.forEach {
+                VendedorBusinessCard(store = it, navController = navController, user = user, tipo = 1)
+            }
+        } else {
+            // Mensaje para cuando no hay otras tiendas
+            Text(
+                text = "No hay negocios adicionales registrados.",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Normal
+                ),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
-
-        storeList.forEach {
-            VendedorBusinessCard(it, navController, user, 2)
-        }
-        VendedorBusinessCard(
-            store = Store("manual_id", "Manual Business", "Manual Location", "Manual Description"),
-            navController = navController,
-            user = user,
-            tipo = 1 // Puedes cambiar el tipo para aplicar un borde si deseas
-        )
-
-        VendedorBusinessCard(
-            store = Store("manual_id", "Manual Business", "Manual Location", "Manual Description"),
-            navController = navController,
-            user = user,
-            tipo = 1 // Puedes cambiar el tipo para aplicar un borde si deseas
-        )
-
-        VendedorBusinessCard(
-            store = Store("manual_id", "Manual Business", "Manual Location", "Manual Description"),
-            navController = navController,
-            user = user,
-            tipo = 1 // Puedes cambiar el tipo para aplicar un borde si deseas
-        )
-
-        VendedorBusinessCard(
-            store = Store("manual_id", "Manual Business", "Manual Location", "Manual Description"),
-            navController = navController,
-            user = user,
-            tipo = 1 // Puedes cambiar el tipo para aplicar un borde si deseas
-        )
-
     }
 }
 
-@Composable
-fun VendedorBusinessCard(store: Store, navController: NavController, user: User, tipo: Int) {
-    val borderColor = if (tipo == 1) Color.Transparent else Color(0xFF72BF85) // Borde para "Otros Negocios"
 
+
+
+@Composable
+fun VendedorBusinessCard(store: Store?, navController: NavController, user: User, tipo: Int) {
     ElevatedCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(16.dp)),
+            .padding(vertical = 8.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
         shape = RoundedCornerShape(24.dp)
     ) {
@@ -256,26 +242,28 @@ fun VendedorBusinessCard(store: Store, navController: NavController, user: User,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                // Título de la tarjeta
-                Text(
-                    text = store.name, // Usando el nombre del negocio
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = Color(0xFF9B86BE),
-                        fontWeight = FontWeight.Bold,
+                // Mostrar el nombre del negocio o el mensaje de configuración
+                if (store != null) {
+                    Text(
+                        text = if (store?.name.isNullOrBlank()) "Configure su negocio" else store.name,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = Color(0xFF9B86BE),
+                            fontWeight = FontWeight.Bold,
+                        )
                     )
-                )
+                }
 
-                // Fila para el icono pequeño y el texto "Presione aquí"
+                // Icono y texto adicional
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        painter = painterResource(id = R.drawable.baseline_touch_app_24), // Asegúrate de que este recurso esté disponible
+                        painter = painterResource(id = R.drawable.baseline_touch_app_24),
                         contentDescription = null,
                         tint = Color(0xFF72BF85),
-                        modifier = Modifier.size(16.dp) // Tamaño del icono
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp)) // Espacio entre el icono y el texto
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Presione aquí",
+                        text = if (store?.name.isNullOrBlank()) "Crear negocio" else "Presione aquí",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = Color(0xFF9B86BE)
                         )
@@ -283,23 +271,28 @@ fun VendedorBusinessCard(store: Store, navController: NavController, user: User,
                 }
             }
 
-            // Imagen condicional basada en el tipo de negocio
+            // Imagen del tipo de negocio
             Image(
                 painter = if (tipo == 1) painterResource(id = R.drawable.shop_open_online_store_svgrepo_com)
                 else painterResource(id = R.drawable.seller_in_shop_person_offer_sell_svgrepo_com),
                 contentDescription = null,
                 modifier = Modifier.size(40.dp)
             )
-            Spacer(modifier = Modifier.width(30.dp))
 
-            // Icono de flecha al final de la tarjeta
+            // Icono de flecha para navegar
             Image(
                 painter = painterResource(id = R.drawable.baseline_arrow_circle_right_24),
-                contentDescription = "Ir a ventas",
+                contentDescription = "Ir a configuración",
                 modifier = Modifier
                     .size(38.dp)
                     .clickable {
-                        navController.navigate("business/${store.id}/${user.id}")
+                        if (store?.name.isNullOrBlank()) {
+                            navController.navigate("configure_business")
+                        } else {
+                            if (store != null) {
+                                navController.navigate("business/${store.id}/${user.id}")
+                            }
+                        }
                     },
                 alignment = Alignment.Center,
                 colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color(0xFF72BF85))
@@ -307,6 +300,7 @@ fun VendedorBusinessCard(store: Store, navController: NavController, user: User,
         }
     }
 }
+
 
 
 
@@ -320,3 +314,17 @@ fun VendedorBusinessCard(store: Store, navController: NavController, user: User,
 //    }
 //    VendedorHomeScreen(viewModel = fakeViewModel, navController = navController)
 //}
+
+
+
+@Preview(showBackground = true)
+@Composable
+fun VendedorHomeScreenPreview() {
+    val navController = rememberNavController()
+    val fakeViewModel = object : HomeViewModel() {
+        override fun fetchStore() {}
+        override fun fetchToken(context: Context) {}
+    }
+    VendedorHomeScreen(viewModel = fakeViewModel, navController = navController)
+}
+

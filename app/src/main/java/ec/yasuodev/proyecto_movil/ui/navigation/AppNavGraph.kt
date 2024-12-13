@@ -29,8 +29,10 @@ import ec.yasuodev.proyecto_movil.ui.core.business.ProfileEditBusinessViewModel
 import ec.yasuodev.proyecto_movil.ui.core.business.SalesScreen
 import ec.yasuodev.proyecto_movil.ui.core.business.SalesViewModel
 import ec.yasuodev.proyecto_movil.ui.core.business.ReportingScreen
+import ec.yasuodev.proyecto_movil.ui.core.home.ClientHomeScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeViewModel
+import ec.yasuodev.proyecto_movil.ui.core.home.VendedorHomeScreen
 import ec.yasuodev.proyecto_movil.ui.core.manager.ManagerScreen
 import ec.yasuodev.proyecto_movil.ui.core.manager.ManagerViewModel
 import ec.yasuodev.proyecto_movil.ui.core.products.AddProductScreen
@@ -79,6 +81,21 @@ fun AppNavGraph() {
             composable("home") {
                 HomeScreen(HomeViewModel(), navController)
             }
+            composable("clientHome") {
+                ClientHomeScreen(
+                    viewModel = HomeViewModel(),
+                    navController = navController
+                )
+            }
+
+            composable("vendedorHome") {
+                VendedorHomeScreen(
+                    viewModel = HomeViewModel(),
+                    navController = navController
+                )
+            }
+
+
             composable("profile") {
                 ProfileScreen(ProfileViewModel(), navController)
             }

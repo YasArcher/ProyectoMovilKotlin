@@ -178,12 +178,8 @@ fun BusinessContent(
     Box(modifier.fillMaxSize()
         .background(Color.White)) {
         Column(modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Bienvenido a ${store.name}",
-                style = MaterialTheme.typography.titleLarge.copy(color = MaterialTheme.colorScheme.primary),
-                modifier = Modifier.padding(15.dp),
-            )
-            StatsCard(modifier, viewModel, navController )
+
+
 
             Spacer(modifier = Modifier.padding(10.dp))
             Column(modifier.fillMaxSize()) {
@@ -455,7 +451,7 @@ fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel, navController: N
             .background(MaterialTheme.colorScheme.background)
             .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
             .clickable {
-                // Navegar a la nueva vista
+
                 navController.navigate("reporteria") // Reemplaza "new_view_route" por tu ruta configurada
             },
         contentAlignment = Alignment.Center

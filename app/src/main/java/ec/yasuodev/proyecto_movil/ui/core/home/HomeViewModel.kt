@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 open class HomeViewModel : ViewModel() {
     private val _token = MutableLiveData<String>()
     private val _user = MutableLiveData<User>()
-    private val _userID = MutableLiveData<String>()
+    val _userID = MutableLiveData<String>()
     private val _store = MutableLiveData<Store>()
     private val _storeList = MutableLiveData<List<Store>>()
     private val _addState = MutableLiveData<AddState>()
@@ -127,6 +127,34 @@ open class HomeViewModel : ViewModel() {
     }
 
     open fun fetchStore() {
+        // Si ya hay datos cargados en _storeList, no vuelvas a cargar
+        if (!_storeList.value.isNullOrEmpty()) {
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                // Consulta para obtener todas las tiendas de la tabla `business`
+                val response: List<Store> = SupabaseClient.client.from("business").select(
+                    columns = Columns.list(
+                        "id",
+                        "name",
+                        "owner",
+                        "business_image"
+                    )
+                ).decodeList() // Decodifica una lista de objetos `Store`
+
+                // Filtrar para excluir el negocio principal
+                val mainStoreId = _store.value?.id ?: "" // Obtiene el ID del negocio principal
+                _storeList.value = response.filter { it.id != mainStoreId } // Filtra la lista
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+
+    open fun fetchUniqueStore() {
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("business").select(
