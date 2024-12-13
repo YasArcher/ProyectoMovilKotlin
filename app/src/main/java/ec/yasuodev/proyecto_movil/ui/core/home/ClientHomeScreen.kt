@@ -117,40 +117,10 @@ fun ClientHomeContent(viewModel: HomeViewModel, navController: NavController, us
 
         // Renderiza cada tarjeta de la lista de `storeList` desde el ViewModel
         storeList.forEach {
-            BusinessCard(it, navController, user, 2)
+            BusinessCard(it, navController, user, 1)
         }
 
-        // Tarjetas adicionales añadidas manualmente
-        BusinessCard(
-            store = Store("4", "Inventory Hub 4", "Location 4", "Description 4"),
-            navController = navController,
-            user = user,
-            tipo = 1
-        )
-        BusinessCard(
-            store = Store("5", "Inventory Hub 5", "Location 5", "Description 5"),
-            navController = navController,
-            user = user,
-            tipo = 1
-        )
-        BusinessCard(
-            store = Store("5", "Inventory Hub 5", "Location 5", "Description 5"),
-            navController = navController,
-            user = user,
-            tipo = 1
-        )
-        BusinessCard(
-            store = Store("5", "Inventory Hub 5", "Location 5", "Description 5"),
-            navController = navController,
-            user = user,
-            tipo = 1
-        )
-        BusinessCard(
-            store = Store("5", "Inventory Hub 5", "Location 5", "Description 5"),
-            navController = navController,
-            user = user,
-            tipo = 1
-        )
+
     }
 }
 
@@ -178,12 +148,13 @@ fun BusinessCard(store: Store, navController: NavController, user: User, tipo: I
             ) {
 
                 Text(
-                    text = "INVENTORY HUB",
+                    text = store.name, // Cambia el texto fijo por el nombre del negocio
                     style = MaterialTheme.typography.titleMedium.copy(
                         color = Color(0xFF9B86BE),
                         fontWeight = FontWeight.Bold,
                     )
                 )
+
 
                 // Agrega el icono pequeño al lado izquierdo del texto
                 Row(verticalAlignment = Alignment.CenterVertically) {

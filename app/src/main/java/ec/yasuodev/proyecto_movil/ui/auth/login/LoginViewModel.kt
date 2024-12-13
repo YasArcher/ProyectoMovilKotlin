@@ -6,11 +6,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import ec.yasuodev.proyecto_movil.ui.auth.models.UserState
 import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
 import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -71,11 +74,32 @@ class LoginViewModel : ViewModel() {
         delay(4000)
         _isLoading.value = false
     }
+    open fun fetchUserRole(userId: String, onRoleFetched: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                // Realiza la consulta a la tabla `users` para obtener el rol del usuario
+                val response = SupabaseClient.client.from("users").select(
+                    columns = Columns.list("rol")
+                ) {
+                    filter {
+                        eq("id", userId) // Filtra por el ID del usuario
+                    }
+                }.decodeSingle<Map<String, String>>() // Decodifica la respuesta como un mapa
+
+                val role = response["rol"] ?: "unknown" // Obtén el rol del mapa, o usa "unknown" por defecto
+                onRoleFetched(role) // Devuelve el rol a través del callback
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onRoleFetched("unknown") // Maneja errores y devuelve un valor predeterminado
+            }
+        }
+    }
 
     fun signIn(
         context: Context,
         email: String,
-        password: String
+        password: String,
+        navController: NavController
     ) {
         viewModelScope.launch {
             try {
@@ -90,14 +114,28 @@ class LoginViewModel : ViewModel() {
                         sessionDetails.toString(),
                         sessionDetails.accessToken.toString()
                     )
-                    _userState.value = UserState.Success("Inicio de sesión exitoso")
+
+                    // Obtener el rol del usuario
+                    sessionDetails.user?.let {
+                        fetchUserRole(it.id) { role ->
+                            println("idaaaaaaaaa"+it.id)
+                            println(sessionDetails)
+                            println("rolll"+role)
+                            when (role) {
+                                "client" -> navController.navigate("clientHome")
+                                "seller" -> navController.navigate("vendedorHome")
+                                else -> navController.navigate("home") // Redirige a una pantalla predeterminada si no tiene un rol definido
+                            }
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 _userState.value =
-                    UserState.Error("Error al iniciar sesión: Revise sus credenciales")
+                    UserState.Error("Error al iniciar sesión: ${e.message}")
             }
         }
     }
+
 
     fun signOut(context: Context) {
         viewModelScope.launch {
