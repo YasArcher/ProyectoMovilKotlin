@@ -10,5 +10,8 @@ data class Sale(
     val quantity: Int,
     val created_at: String,
     val id_business: String,
-    val seled_by: String
+    val seled_by: String,
+    val state: String,
+    val price: Double,
+    val invoice_id: String
 )

@@ -181,7 +181,7 @@ fun ProductCard(product: Product, viewModel: ProductsViewModel, navController: N
 }
 
 fun editProduct(product: Product, navController: NavController) {
-    navController.navigate("editProduct/${product.id}/${product.name}/${product.store}/${product.price}/${product.stock}")
+    navController.navigate("editProduct/${product.id}/${product.name}/${product.store}/${product.price}/${product.stock}/${product.category}")
 }
 
 fun addProduct(navController: NavController, store: String) {

@@ -675,7 +675,7 @@ fun ProductSelectionDialog(
                 LazyColumn(modifier = Modifier.height(200.dp)) {
                     items(filteredProducts) { product ->
                         if (product.stock > 0) {
-                            ProductRow(product, isSelected = selectedProduct?.id == product.id) {
+                            SaleRow(product, isSelected = selectedProduct?.id == product.id) {
                                 selectedProduct = product
                                 searchQuery = product.name
                             }
@@ -854,7 +854,7 @@ fun PurchaseDialog(
 }
 
 @Composable
-fun ProductRow(product: Product, isSelected: Boolean, onClick: () -> Unit) {
+fun SaleRow(product: Product, isSelected: Boolean, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1002,7 +1002,10 @@ private fun AuxiliarSaleProduct.toSale(): Sale {
         product = this.product,
         quantity = this.quantity,
         id_business = this.id_business,
-        seled_by = this.seled_by
+        seled_by = this.seled_by,
+        state = "this.state",
+        invoice_id = "this.invoice_id",
+        price = this.productPrice
     )
 }
 

@@ -45,7 +45,7 @@ fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
         viewModel.fetchStore()
        viewModel.fetchUniqueStore()
     }
-    val user by viewModel.user.observeAsState(User("", "", "", "", "", ""))
+    val user by viewModel.user.observeAsState(User("", "", "", "", "", "", ""))
 
     Scaffold(
         containerColor = Color(0xFF9B86BE) // Fondo lavanda

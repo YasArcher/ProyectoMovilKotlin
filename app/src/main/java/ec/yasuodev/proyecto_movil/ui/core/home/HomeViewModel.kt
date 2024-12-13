@@ -96,7 +96,8 @@ open class HomeViewModel : ViewModel() {
                         "lastname",
                         "email",
                         "nickname",
-                        "image"
+                        "image",
+                        "rol"
                     )
                 ) {
                     filter {
