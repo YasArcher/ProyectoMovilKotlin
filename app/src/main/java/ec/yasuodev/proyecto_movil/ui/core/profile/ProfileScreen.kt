@@ -73,7 +73,7 @@ fun ProfileScreen(viewModel: ProfileViewModel, navController: NavController) {
 @Composable
 fun Profile(modifier: Modifier, viewModel: ProfileViewModel, navController: NavController) {
     val context = LocalContext.current
-    val user by viewModel.user.observeAsState(User("", "", "", "", "", ""))
+    val user by viewModel.user.observeAsState(User("", "", "", "", "", "", ""))
     val isLoading by viewModel.isLoading.observeAsState(false)
     val userState by viewModel.userState.observeAsState(UserState.Loading)
     val coroutineScope = rememberCoroutineScope()

@@ -43,7 +43,7 @@ fun ClientHomeScreen(viewModel: HomeViewModel, navController: NavController) {
         viewModel.fetchToken(context)
         viewModel.fetchStore()
     }
-    val user by viewModel.user.observeAsState(User("", "", "", "", "", ""))
+    val user by viewModel.user.observeAsState(User("", "", "", "", "", "",""))
 
     Scaffold(
         containerColor = Color.White

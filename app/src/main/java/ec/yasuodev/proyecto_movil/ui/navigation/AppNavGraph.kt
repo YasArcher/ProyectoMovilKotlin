@@ -81,14 +81,15 @@ fun AppNavGraph() {
             composable("manager") {
                 ManagerScreen(ManagerViewModel(), navController)
             }
-            composable("editUser/{id}/{name}/{lastName}/{email}/{nickName}/{image}",
+            composable("editUser/{id}/{name}/{lastName}/{email}/{nickName}/{image}/{rol}",
                 arguments = listOf(
                     navArgument("id") { type = NavType.StringType },
                     navArgument("name") { type = NavType.StringType },
                     navArgument("lastName") { type = NavType.StringType },
                     navArgument("email") { type = NavType.StringType },
                     navArgument("nickName") { type = NavType.StringType },
-                    navArgument("image") { type = NavType.StringType }
+                    navArgument("image") { type = NavType.StringType },
+                    navArgument("rol") { type = NavType.StringType }
                 )) { backStackEntry ->
                 val user = User(
                     backStackEntry.arguments?.getString("id") ?: "",
@@ -96,7 +97,8 @@ fun AppNavGraph() {
                     backStackEntry.arguments?.getString("lastName") ?: "Nuevo",
                     backStackEntry.arguments?.getString("email") ?: "",
                     backStackEntry.arguments?.getString("nickName") ?: "user",
-                    backStackEntry.arguments?.getString("image") ?: "noImage"
+                    backStackEntry.arguments?.getString("image") ?: "noImage",
+                    backStackEntry.arguments?.getString("rol") ?: "client",
                 )
                 EditProfileScreen(EditProfileViewModel(), navController, user)
             }
@@ -124,7 +126,8 @@ fun AppNavGraph() {
                     backStackEntry.arguments?.getString("name") ?: "",
                     backStackEntry.arguments?.getString("store") ?: "",
                     backStackEntry.arguments?.getString("price")?.toDouble() ?: 0.0,
-                    backStackEntry.arguments?.getInt("stock") ?: 0
+                    backStackEntry.arguments?.getInt("stock") ?: 0,
+                    backStackEntry.arguments?.getString("category") ?: "",
                 )
                 EditProductScreen(EditProductViewModel(), navController, product)
             }

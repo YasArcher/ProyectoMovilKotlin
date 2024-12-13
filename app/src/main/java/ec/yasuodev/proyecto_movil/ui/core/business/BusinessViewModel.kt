@@ -168,7 +168,10 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
                     product = product.id,
                     quantity = quantity,
                     id_business = product.store,
-                    seled_by = seled_by
+                    seled_by = seled_by,
+                    state = "completed",
+                    invoice_id = "",
+                    price = product.price
                 )
                 SupabaseClient.client.from("sales").insert(sale)
 

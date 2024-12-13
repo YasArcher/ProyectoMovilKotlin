@@ -1,6 +1,10 @@
 package ec.yasuodev.proyecto_movil.ui.core.business
 
+import android.os.Build
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,17 +17,23 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import ec.yasuodev.proyecto_movil.ui.core.models.AddState
+import ec.yasuodev.proyecto_movil.ui.shared.models.AuxiliarSaleProduct
+import ec.yasuodev.proyecto_movil.ui.shared.models.Product
+import ec.yasuodev.proyecto_movil.ui.shared.models.Store
+import kotlinx.coroutines.launch
 
-
-
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SalesScreen(
     viewModel: SalesViewModel,
@@ -36,95 +46,69 @@ fun SalesScreen(
             .fillMaxSize()
             .background(Color(0xFF9B59B6))
     ) {
+
         SalesContent(viewModel, navController, Modifier, store, seller)
+        confirmButton(viewModel, seller)
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SalesContent(
     viewModel: SalesViewModel,
     navController: NavController,
     modifier: Modifier,
-    store: String,
+    storeID: String,
     seller: String
 ) {
-    // Estados para controlar el modal
-    var showModal by remember { mutableStateOf(false) }
-    var isEditing by remember { mutableStateOf(false) }
-    var selectedProductName by remember { mutableStateOf("") }
-    var selectedQuantity by remember { mutableStateOf(0) }
-    var selectedValue by remember { mutableStateOf(0.0) }
-
-    // Ejemplo de productos (puedes usar datos reales del ViewModel si están disponibles)
-    val products = listOf(
-        Product("Pan", 8, 0.96),
-        Product("Leche", 4, 1.20)
-    )
-    val total = products.sumOf { it.total }
+    val store by viewModel.store.observeAsState(Store("", "", "", ""))
+    val showDialog by viewModel.showDialog.observeAsState(false)
+    var expanded by remember { mutableStateOf(false) }
+    var transactionType by remember { mutableStateOf(TransactionType.SALE) }
+    val income by viewModel.income.observeAsState(0.0)
+    LaunchedEffect(key1 = viewModel) {
+        val dateToday = java.time.LocalDate.now().toString()
+        viewModel.fetchBusiness(storeID)
+    }
 
     Column(modifier.fillMaxSize()) {
         // Encabezado
-        HeaderSection(title = "Vender", total = total)
+        HeaderSection(title = "Vender")
 
         Row(modifier.padding(horizontal = 16.dp)) {
             // Botón para abrir el modal en modo agregar
             AddButton(onClick = {
-                isEditing = false // Modo agregar
-                selectedProductName = ""
-                selectedQuantity = 0
-                selectedValue = 0.0
-                showModal = true
+                transactionType = TransactionType.SALE
+                viewModel.showDialog(true)
+                expanded = false
             })
-            TotalCard(total)
+            TotalCard(income)
         }
 
         // Tabla de productos
         Spacer(modifier = Modifier.height(16.dp))
-        ProductsTable(
-            products = products,
-            onEditClick = { product ->
-                isEditing = true // Modo edición
-                selectedProductName = product.name
-                selectedQuantity = product.quantity
-                selectedValue = product.total
-                showModal = true
-            },
-            onDeleteClick = { product ->
-                // Aquí puedes manejar la eliminación del producto
-                println("Eliminar producto: ${product.name}")
-            }
-        )
+
+        ProductsTable(viewModel)
 
         Spacer(modifier = Modifier.weight(1f))
     }
 
     // Mostrar el modal si `showModal` es true
-    if (showModal) {
-        StyledAddModal(
-            isEditing = isEditing,
-            productName = selectedProductName,
-            quantity = selectedQuantity,
-            value = selectedValue,
-            onDismiss = { showModal = false },
-            onConfirm = { productName, quantity, value ->
-                if (isEditing) {
-                    // Lógica para guardar cambios al editar
-                    println("Producto actualizado: $productName, Cantidad: $quantity, Valor: $value")
-                } else {
-                    // Lógica para agregar un producto nuevo
-                    println("Producto agregado: $productName, Cantidad: $quantity, Valor: $value")
-                }
-                showModal = false
-            }
+    // Modal para agregar producto
+    if (showDialog) {
+        StyledProductSelectionDialog(
+            viewModel = viewModel,
+            onDismiss = { viewModel.showDialog(false) },
+            onProductSelected = { productName, quantity ->
+                viewModel.addProductToTable(productName, quantity, seller)
+            },
+            seller
         )
     }
 }
 
-
-
-
 @Composable
-fun HeaderSection(title: String, total: Double) {
+fun HeaderSection(title: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -165,8 +149,10 @@ fun TotalCard(total: Double) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ProductsTable(products: List<Product>, onEditClick: (Product) -> Unit, onDeleteClick: (Product) -> Unit) {
+fun ProductsTable(viewModel: SalesViewModel) {
+    val productsModel by viewModel.productsModel.observeAsState(emptyList())
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -192,17 +178,15 @@ fun ProductsTable(products: List<Product>, onEditClick: (Product) -> Unit, onDel
         LazyColumn(
             modifier = Modifier.weight(1f)
         ) {
-            items(products) { product ->
-                ProductRow(
+            items(productsModel) { product ->
+                SaleTableRow(
                     product = product,
-                    onEditClick = onEditClick,
-                    onDeleteClick = onDeleteClick
+                    viewModel = viewModel
                 )
             }
         }
     }
 }
-
 
 @Composable
 fun TableHeaderCell(text: String, modifier: Modifier) {
@@ -221,8 +205,21 @@ fun TableHeaderCell(text: String, modifier: Modifier) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ProductRow(product: Product, onEditClick: (Product) -> Unit, onDeleteClick: (Product) -> Unit) {
+fun SaleTableRow(product: AuxiliarSaleProduct, viewModel: SalesViewModel) {
+    var showEditDialog by remember { mutableStateOf(false) }
+
+    if (showEditDialog) {
+        EditProductDialog(
+            product = product,
+            onDismiss = { showEditDialog = false },
+            onSave = { newQuantity ->
+                viewModel.editProductInTable(product.product, newQuantity)
+            }
+        )
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -232,7 +229,7 @@ fun ProductRow(product: Product, onEditClick: (Product) -> Unit, onDeleteClick: 
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = product.name,
+            text = product.productName,
             modifier = Modifier.weight(1f),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
@@ -254,7 +251,7 @@ fun ProductRow(product: Product, onEditClick: (Product) -> Unit, onDeleteClick: 
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { onEditClick(product) }) {
+            IconButton(onClick = { showEditDialog = true }) {
                 Icon(
                     imageVector = Icons.Filled.Edit,
                     contentDescription = "Editar",
@@ -262,7 +259,9 @@ fun ProductRow(product: Product, onEditClick: (Product) -> Unit, onDeleteClick: 
                 )
             }
 
-            IconButton(onClick = { onDeleteClick(product) }) {
+            IconButton(onClick = {
+                viewModel.removeProductFromTable(product.product)
+            }) {
                 Icon(
                     imageVector = Icons.Filled.Delete,
                     contentDescription = "Eliminar",
@@ -290,28 +289,40 @@ fun AddButton(onClick: () -> Unit) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun StyledAddModal(
-    isEditing: Boolean, // Nuevo parámetro para determinar si estamos editando
-    productName: String = "", // Nombre del producto para edición
-    quantity: Int = 0, // Cantidad del producto para edición
-    value: Double = 0.0, // Valor del producto para edición
+fun StyledProductSelectionDialog(
+    viewModel: SalesViewModel,
     onDismiss: () -> Unit,
-    onConfirm: (productName: String, quantity: Int, value: Double) -> Unit
+    onProductSelected: (product: Product, quantity: Int) -> Unit,
+    seller: String
 ) {
-    // Estados inicializados con los valores proporcionados
-    var editableProductName by remember { mutableStateOf(productName) }
-    var editableQuantity by remember { mutableStateOf(quantity.toString()) }
-    var editableValue by remember { mutableStateOf(value.toString()) }
+    val coroutineScope = rememberCoroutineScope()
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredProducts by viewModel.filteredProducts.observeAsState(emptyList())
+    var selectedProduct by remember { mutableStateOf<Product?>(null) }
+    var quantity by remember { mutableIntStateOf(1) }
+    val context = LocalContext.current
+    val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
+
+    LaunchedEffect(searchQuery) {
+        viewModel.filterProducts(searchQuery)
+    }
+
+    LaunchedEffect(addState) {
+        if (addState is AddState.Success) {
+            onDismiss()
+        }
+    }
 
     AlertDialog(
         onDismissRequest = { onDismiss() },
         title = {
             Text(
-                text = if (isEditing) "Editar Producto" else "Agregar Producto", // Cambia el título dinámicamente
+                text = "Seleccionar Producto",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF5A005A)
+                    color = Color(0xFF5A005A) // Color principal morado
                 ),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -328,30 +339,40 @@ fun StyledAddModal(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Campo de nombre del producto
+                    // Campo de búsqueda
                     OutlinedTextField(
-                        value = editableProductName,
-                        onValueChange = { editableProductName = it },
-                        label = { Text("Nombre del Producto") },
+                        value = searchQuery,
+                        onValueChange = { query ->
+                            searchQuery = query
+                            viewModel.filterProducts(query) // Filtra productos en el ViewModel
+                        },
+                        label = { Text("Buscar producto") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Buscar"
+                            )
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Campo de cantidad
-                    OutlinedTextField(
-                        value = editableQuantity,
-                        onValueChange = { editableQuantity = it },
-                        label = { Text("Cantidad") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    // Lista de productos filtrados
+                    LazyColumn(modifier = Modifier.height(200.dp)) {
+                        items(filteredProducts) { product ->
+                            if (product.stock > 0) { // Valida que tenga stock disponible
+                                ProductRow(product, isSelected = selectedProduct?.id == product.id) {
+                                    selectedProduct = product
+                                    searchQuery = product.name
+                                }
+                            }
+                        }
+                    }
 
-                    // Campo de valor
-                    OutlinedTextField(
-                        value = editableValue,
-                        onValueChange = { editableValue = it },
-                        label = { Text("Valor") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
+                    // Selector de cantidad
+                    QuantitySelector(
+                        quantity = quantity,
+                        onQuantityChange = { quantity = it },
+                        maxQuantity = selectedProduct?.stock ?: 0
                     )
                 }
             }
@@ -359,20 +380,168 @@ fun StyledAddModal(
         confirmButton = {
             Button(
                 onClick = {
-                    val parsedQuantity = editableQuantity.toIntOrNull() ?: 0
-                    val parsedValue = editableValue.toDoubleOrNull() ?: 0.0
-                    onConfirm(editableProductName, parsedQuantity, parsedValue) // Llamada a onConfirm
+                    selectedProduct?.let {
+                        // Lógica de confirmación mejorada del segundo AlertDialog
+                        onProductSelected(it, quantity)
+                        coroutineScope.launch {
+                            onDismiss.apply {
+                                Toast.makeText(
+                                    context,
+                                    "Agregando Venta",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            viewModel.onAddSelected().apply {
+                                when (addState) {
+                                    is AddState.Success -> {
+                                        Toast.makeText(
+                                            context,
+                                            (addState as AddState.Success).message,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+
+                                    is AddState.Error -> {
+                                        Toast.makeText(
+                                            context,
+                                            (addState as AddState.Error).message,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+
+                                    else -> Unit
+                                }
+                            }
+                        }
+                        onDismiss() // Cierra el modal
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5A005A)),
+                modifier = Modifier.fillMaxWidth(),
+                enabled = selectedProduct != null && quantity <= (selectedProduct?.stock ?: 0) // Habilita solo si es válido
+            ) {
+                Text("Agregar", color = Color.White)
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = { onDismiss() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (isEditing) "Guardar Cambios" else "Agregar", color = Color.White) // Botón dinámico
+                Text("Cancelar", color = Color.White)
             }
         },
         modifier = Modifier.padding(16.dp)
     )
 }
 
+@Composable
+fun ProductRow(product: Product, isSelected: Boolean, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 4.dp else 2.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12F) else MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = product.name, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
 
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun EditProductDialog(
+    product: AuxiliarSaleProduct,
+    onDismiss: () -> Unit,
+    onSave: (newQuantity: Int) -> Unit
+) {
+    var quantity by remember { mutableStateOf(product.quantity) }
 
-data class Product(val name: String, val quantity: Int, val total: Double)
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = {
+            Text(
+                text = "Editar Producto",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF5A005A)
+                )
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text("Producto: ${product.productName}", style = MaterialTheme.typography.bodyLarge)
+                QuantitySelector(
+                    quantity = quantity,
+                    onQuantityChange = { quantity = it },
+                    maxQuantity = product.productStock + product.quantity
+                )
+                Divider(color = Color(0xFF5A005A), thickness = 1.dp)
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (quantity in 1..(product.productStock + product.quantity)) {
+                        onSave(quantity)
+                        onDismiss()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5A005A)),
+                enabled = quantity in 1..(product.productStock + product.quantity)
+            ) {
+                Text("Actualizar", color = Color.White)
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = { onDismiss() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63))
+            ) {
+                Text("Cancelar", color = Color.White)
+            }
+        },
+        modifier = Modifier.background(Color.White, shape = RoundedCornerShape(16.dp))
+    )
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun confirmButton(viewModel: SalesViewModel, seller: String) {
+    val coroutineScope = rememberCoroutineScope()
+
+    Button(
+        onClick = {
+            coroutineScope.launch {
+                viewModel.confirmSales(seller)
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .height(50.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5A005A))
+    ) {
+        Text(
+            text = "Confirmar Venta",
+            color = Color.White,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+        )
+    }
+}

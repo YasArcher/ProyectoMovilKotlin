@@ -1,5 +1,6 @@
 package ec.yasuodev.proyecto_movil.ui.core.home
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +52,7 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
         viewModel.fetchToken(context)
         viewModel.fetchStore()
     }
-    val user by viewModel.user.observeAsState(User("", "", "", "", "", ""))
+    val user by viewModel.user.observeAsState(User("", "", "", "", "", "", ""))
     Scaffold(
         topBar = {
             TopAppBar(
@@ -111,6 +112,7 @@ fun DefaultCard(store: Store, navController: NavController, user: User, tipo : I
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
+                Log.d("TAG", "Mensaje de depuración: storeID es ${store.id} y userID es ${user.id}")
                 navController.navigate("business/${store.id}/${user.id}")
             }
             .padding(8.dp),

@@ -20,6 +20,8 @@ class AddProductViewModel : ViewModel() {
     val price: LiveData<String> = _price
     private val _stock = MutableLiveData<String>()
     val stock: LiveData<String> = _stock
+    private val _category = MutableLiveData<String>()
+    val category: LiveData<String> = _name
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
     private val _editEnable = MutableLiveData<Boolean>()
@@ -51,10 +53,11 @@ class AddProductViewModel : ViewModel() {
         }
     }
 
-    fun onAddChanged(name: String, price: String, stock: String) {
+    fun onAddChanged(name: String, price: String, stock: String, category: String) {
         _name.value = name
         _price.value = price
         _stock.value = stock
+        _category.value = category
         _editEnable.value = isValidName(name) && isValidPrice(price) && isValidStock(stock)
     }
 
@@ -77,7 +80,8 @@ class AddProductViewModel : ViewModel() {
                 name = name.value!!,
                 store = store,
                 price = price.value!!.toDouble(),
-                stock = stock.value!!.toInt()
+                stock = stock.value!!.toInt(),
+                category = category.value!!
             )
             try {
                 SupabaseClient.client.from("products").insert(

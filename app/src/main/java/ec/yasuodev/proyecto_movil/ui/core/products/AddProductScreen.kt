@@ -73,6 +73,7 @@ fun AddContent(
     val name: String by viewModel.name.observeAsState(initial = "")
     val price: String by viewModel.price.observeAsState(initial = "")
     val stock: String by viewModel.stock.observeAsState(initial = "")
+    val category: String by viewModel.category.observeAsState(initial = "")
     val editEnable: Boolean by viewModel.editEnable.observeAsState(initial = false)
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(key1 = viewModel) {
@@ -100,7 +101,8 @@ fun AddContent(
                         viewModel.onAddChanged(
                             newValue,
                             price,
-                            stock
+                            stock,
+                            category
                         )
                     },
                     tipo = 2,
@@ -117,7 +119,8 @@ fun AddContent(
                         viewModel.onAddChanged(
                             name,
                             newValue,
-                            stock
+                            stock,
+                            category
                         )
                     },
                     tipo = 5,
@@ -134,7 +137,8 @@ fun AddContent(
                         viewModel.onAddChanged(
                             name,
                             price,
-                            newValue
+                            newValue,
+                            category
                         )
                     },
                     tipo = 5,
