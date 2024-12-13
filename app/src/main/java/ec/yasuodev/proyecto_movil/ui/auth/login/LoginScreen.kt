@@ -35,6 +35,8 @@ import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicButton
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicField
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicText
+import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
+import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,17 +80,31 @@ fun LoginScreen(viewModel: LoginViewModel, navController: NavController) {
             ) {
                 HeaderImage(
                     modifier = Modifier.size(220.dp)
-                    
                 )
             }
+
             // Contenido principal desplazable
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 250.dp) // Deja espacio para la cabecera
-                    .verticalScroll(rememberScrollState()) // Habilita el desplazamiento en la columna
-            ) {
-                Login(modifier = Modifier.align(Alignment.CenterHorizontally), viewModel, navController)
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 250.dp) // Deja espacio para la cabecera
+                        .verticalScroll(rememberScrollState()) // Habilita el desplazamiento en la columna
+                ) {
+                    Login(modifier = Modifier.align(Alignment.CenterHorizontally), viewModel, navController)
+                }
+
+                // Indicador de carga superpuesto
+                val isLoading: Boolean by viewModel.isLoading.observeAsState(initial = false)
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xAA000000)) // Fondo semitransparente
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+                }
             }
         }
     }
@@ -100,138 +116,119 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
     val email: String by viewModel.email.observeAsState(initial = "")
     val password: String by viewModel.password.observeAsState(initial = "")
     val loginEnable: Boolean by viewModel.loginEnable.observeAsState(initial = false)
-    val isLoading: Boolean by viewModel.isLoading.observeAsState(initial = false)
     val passwordVisible: Boolean by viewModel.passwordVisible.observeAsState(initial = false)
     val userState: UserState by viewModel.userState.observeAsState(initial = UserState.Loading)
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(key1 = viewModel) {
-        if (TokenManager.getToken(context) != null) {
-            navController.navigate("home")
+        val sessionDetails = SupabaseClient.client.auth.currentSessionOrNull()
+
+        if (sessionDetails != null) {
+            sessionDetails.user?.let {
+                viewModel.fetchUserRole(it.id) { role ->
+                    println("idaaaaaaaaa"+it.id)
+                    println(sessionDetails)
+                    println("rolll"+role)
+                    when (role) {
+                        "client" -> navController.navigate("clientHome")
+                        "seller" -> navController.navigate("vendedorHome")
+                        else -> navController.navigate("home") // Redirige a una pantalla predeterminada si no tiene un rol definido
+                    }
+                }
+            }
         }
     }
 
-    if (isLoading) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
-        }
-    } else {
-        Column(
-            modifier = modifier.padding(horizontal = 32.dp)
-        ) {
-            Spacer(modifier = Modifier.padding(16.dp))
-            // Campo de Email
-            Text(
-                text = "Email",
-                fontSize = 14.sp,
-                color = Color(0xFF443D8B), // Color morado del texto
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.padding(3.dp))
 
-            DynamicField(
-                value = email,
-                onTextFieldChange = { newValue -> viewModel.onLoginChanged(newValue, password) },
-                tipo = 1
-            )
-            Spacer(modifier = Modifier.padding(4.dp))
+    Column(
+        modifier = modifier.padding(horizontal = 32.dp)
+    ) {
+        Spacer(modifier = Modifier.padding(16.dp))
+        // Campo de Email
+        Text(
+            text = "Email",
+            fontSize = 14.sp,
+            color = Color(0xFF443D8B), // Color morado del texto
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Spacer(modifier = Modifier.padding(3.dp))
 
-            // Mensaje de validación para email
-            DynamicText(
-                message = viewModel.onLoginMessageEmail(email),
-                state = viewModel.isValidEmail(email)
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
+        DynamicField(
+            value = email,
+            onTextFieldChange = { newValue -> viewModel.onLoginChanged(newValue, password) },
+            tipo = 1
+        )
+        Spacer(modifier = Modifier.padding(4.dp))
 
-            // Campo de Contraseña
-            Text(
-                text = "Contraseña",
-                fontSize = 14.sp,
-                color = Color(0xFF443D8B),
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.padding(3.dp))
+        // Mensaje de validación para email
+        DynamicText(
+            message = viewModel.onLoginMessageEmail(email),
+            state = viewModel.isValidEmail(email)
+        )
+        Spacer(modifier = Modifier.padding(8.dp))
 
-            DynamicField(
-                value = password,
-                onTextFieldChange = { newValue -> viewModel.onLoginChanged(email, newValue) },
-                tipo = 0,
-                passwordVisible = passwordVisible,
-                onVisibilityChange = { viewModel.togglePasswordVisibility() }
-            )
-            Spacer(modifier = Modifier.padding(4.dp))
+        // Campo de Contraseña
+        Text(
+            text = "Contraseña",
+            fontSize = 14.sp,
+            color = Color(0xFF443D8B),
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Spacer(modifier = Modifier.padding(3.dp))
 
-            // Mensaje de validación para contraseña
-            DynamicText(
-                message = viewModel.onLoginMessagePassword(password),
-                state = viewModel.isValidPassword(password)
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
+        DynamicField(
+            value = password,
+            onTextFieldChange = { newValue -> viewModel.onLoginChanged(email, newValue) },
+            tipo = 0,
+            passwordVisible = passwordVisible,
+            onVisibilityChange = { viewModel.togglePasswordVisibility() }
+        )
+        Spacer(modifier = Modifier.padding(4.dp))
 
-            // Link de "¿Olvidaste tu contraseña?"
-            ForgotPassword(
-                modifier = Modifier.align(Alignment.End),
-                navController = navController
-            )
-            Spacer(modifier = Modifier.padding(10.dp))
+        // Mensaje de validación para contraseña
+        DynamicText(
+            message = viewModel.onLoginMessagePassword(password),
+            state = viewModel.isValidPassword(password)
+        )
+        Spacer(modifier = Modifier.padding(8.dp))
 
-            // Botón de Iniciar Sesión
-            DynamicButton(
-                type = 4,
-                text = "Iniciar Sesión",
-                enable = loginEnable,
-                method = {
-                    coroutineScope.launch {
-                        viewModel.signIn(context, email, password).apply {
-                            Toast.makeText(context, "Iniciando sesión", Toast.LENGTH_SHORT).show()
-                        }
-                        viewModel.onLoginSelected().apply {
-                            when (userState) {
-                                is UserState.Success -> {
-                                    Toast.makeText(
-                                        context,
-                                        (userState as UserState.Success).message,
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    navController.navigate("home")
-                                }
+        ForgotPassword(
+            modifier = Modifier.align(Alignment.End),
+            navController = navController
+        )
+        Spacer(modifier = Modifier.padding(10.dp))
 
-                                is UserState.Error -> {
-                                    Toast.makeText(
-                                        context,
-                                        (userState as UserState.Error).message,
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-
-                                else -> Unit
-                            }
-                        }
+        DynamicButton(
+            type = 4,
+            text = "Iniciar Sesión",
+            enable = loginEnable,
+            method = {
+                coroutineScope.launch {
+                    viewModel.signIn(context, email, password, navController).apply {
+                        Toast.makeText(context, "Iniciando sesión", Toast.LENGTH_SHORT).show()
                     }
-                },
-                textSize = 16f,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.padding(8.dp))
-
-            // Texto de registro con funcionalidad de botón
-            Text(
-                text = "No tienes cuenta? Regístrate ya!",
-                fontSize = 15.sp,
-                color = Color(0xFF9B86BE),
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .clickable {
-                        navController.navigate("register")
-                    }
-                    .padding(vertical = 8.dp) // Agrega padding si deseas más espacio alrededor del texto
-            )
+                }
+            },
+            textSize = 16f,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        )
 
 
-        }
+        Spacer(modifier = Modifier.padding(8.dp))
+
+        Text(
+            text = "No tienes cuenta? Regístrate ya!",
+            fontSize = 15.sp,
+            color = Color(0xFF9B86BE),
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .clickable {
+                    navController.navigate("register")
+                }
+                .padding(vertical = 8.dp)
+        )
     }
 }
 
@@ -258,9 +255,8 @@ fun HeaderImage(modifier: Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    // Utiliza un NavController y LoginViewModel de prueba
     val navController = rememberNavController()
-    val viewModel = LoginViewModel() // Asegúrate de que LoginViewModel pueda ser instanciado sin parámetros
+    val viewModel = LoginViewModel()
 
     LoginScreen(viewModel = viewModel, navController = navController)
 }
