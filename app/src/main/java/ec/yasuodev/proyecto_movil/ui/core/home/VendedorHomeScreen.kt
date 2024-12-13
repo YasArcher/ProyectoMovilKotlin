@@ -310,13 +310,13 @@ fun VendedorBusinessCard(store: Store, navController: NavController, user: User,
 
 
 
-@Preview(showBackground = true)
-@Composable
-fun VendedorHomeScreenPreview() {
-    val navController = rememberNavController()
-    val fakeViewModel = object : HomeViewModel() {
-        override fun fetchStore() {}
-        override fun fetchToken(context: Context) {}
-    }
-    VendedorHomeScreen(viewModel = fakeViewModel, navController = navController)
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun VendedorHomeScreenPreview() {
+//    val navController = rememberNavController()
+//    val fakeViewModel = object : HomeViewModel() {
+//        override fun fetchStore() {}
+//        override fun fetchToken(context: Context) {}
+//    }
+//    VendedorHomeScreen(viewModel = fakeViewModel, navController = navController)
+//}

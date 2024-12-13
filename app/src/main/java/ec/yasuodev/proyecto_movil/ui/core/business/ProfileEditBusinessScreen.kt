@@ -1,9 +1,15 @@
 package ec.yasuodev.proyecto_movil.ui.core.business
 
+import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,12 +23,14 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,36 +52,32 @@ import coil.compose.rememberImagePainter
 import ec.yasuodev.proyecto_movil.R
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileEditBusinessScreen(
     navController: NavController,
-    viewModel: ProfileBusinessViewModel = viewModel()
+    viewModel: ProfileEditBusinessViewModel,
+    storeId: String,
 ) {
-    val store = viewModel.store
+    val store = viewModel.store.collectAsState().value
+    val isLoading = viewModel.isLoading.collectAsState().value
+    val selectedImageUri = viewModel.selectedImageUri.collectAsState().value
+    var showEditModal by remember { mutableStateOf(false) }
+    val owner = viewModel.owner.collectAsState().value
 
-    Scaffold(
-        bottomBar = {
-            BottomNavBar(
-                navController = navController,
-                selectedItem = "Perfil", // Marca "Perfil" como seleccionado
-                onItemSelected = { selectedItem ->
-                    // Manejo de la navegación según el elemento seleccionado
-                    when (selectedItem) {
-                        "Inicio" -> navController.navigate("home")
-                        "Tiendas" -> navController.navigate("stores")
-                        "Órdenes" -> navController.navigate("orders")
-                        "Perfil" -> { /* Ya estás en esta pantalla */ }
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
+    LaunchedEffect(key1 = viewModel) {
+        viewModel.fetchBusiness(storeId)
+        viewModel.fetchOwner(store?.owner ?: "")
+    }
+
+    Scaffold {  innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF3F3F3)) // Color de fondo = gris claro
-                .padding(innerPadding) // Ajusta el contenido para que no se superponga con el navbar
+                .background(Color(0xFFF3F3F3))
+                .padding(innerPadding)
         ) {
+            // Background wave
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,11 +96,11 @@ fun ProfileEditBusinessScreen(
                 }
                 drawPath(
                     path = path,
-                    color = Color(0xFF9B51E0) // Morado
+                    color = Color(0xFF9B51E0)
                 )
             }
 
-            // Íconos superiores
+            // Top icons
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -104,12 +108,7 @@ fun ProfileEditBusinessScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Ícono de tres puntos
-                IconButton(
-                    onClick = {
-                        // Acción para las opciones
-                    }
-                ) {
+                IconButton(onClick = { }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = "More Options",
@@ -118,12 +117,7 @@ fun ProfileEditBusinessScreen(
                     )
                 }
 
-                // Ícono de casa
-                IconButton(
-                    onClick = {
-                        navController.navigate("home")
-                    }
-                ) {
+                IconButton(onClick = { navController.navigate("home") }) {
                     Icon(
                         imageVector = Icons.Default.Home,
                         contentDescription = "Home Icon",
@@ -133,7 +127,7 @@ fun ProfileEditBusinessScreen(
                 }
             }
 
-            // Contenedor principal
+            // Main content
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -141,7 +135,6 @@ fun ProfileEditBusinessScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Tarjeta que incluye la imagen y el contenido
                 Card(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
@@ -155,148 +148,172 @@ fun ProfileEditBusinessScreen(
                             .fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Imagen redondeada
-                        Image(
-                            painter = rememberImagePainter(data = store.business_image),
-                            contentDescription = "Business Image",
-                            modifier = Modifier
-                                .size(140.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, Color.Gray, CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
+                        store?.let { currentStore ->
+                            // Business image
+                            Image(
+                                painter = rememberImagePainter(
+                                    data = selectedImageUri ?: currentStore.business_image
+                                ),
+                                contentDescription = "Business Image",
+                                modifier = Modifier
+                                    .size(140.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, Color.Gray, CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        // Nombre del negocio
-                        Text(
-                            modifier = Modifier.padding(bottom = 10.dp),
-                            text = "Nombre Negocio:",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = store.name,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
+                            // Business name
+                            Text(
+                                modifier = Modifier.padding(bottom = 10.dp),
+                                text = "Nombre Negocio:",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = currentStore.name,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        // Nombre del dueño
-                        Text(
-                            modifier = Modifier.padding(bottom = 7.dp),
-                            text = "Dueño:",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = store.owner,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
+                            // Owner name
+                            Text(
+                                modifier = Modifier.padding(bottom = 7.dp),
+                                text = "Dueño:",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = owner?.name + " " + owner?.lastname,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height(24.dp))
 
-                        // Botones: Editar y Eliminar
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Button(
-                                onClick = {
-                                    navController.navigate("editBusiness/${store.id}")
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9B51E0))
+                            // Action buttons
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(text = "Editar", color = Color.White)
-                            }
-                            Button(
-                                onClick = {
-
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF27AE60))
-                            ) {
-                                Text(text = "Eliminar", color = Color.White)
+                                Button(
+                                    onClick = { showEditModal = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9B51E0))
+                                ) {
+                                    Text(text = "Editar", color = Color.White)
+                                }
+                                Button(
+                                    onClick = {
+                                        viewModel.deleteBusiness(currentStore.id)
+                                        navController.navigate("home")
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF27AE60))
+                                ) {
+                                    Text(text = "Eliminar", color = Color.White)
+                                }
                             }
                         }
                     }
                 }
+            }
+
+            if (showEditModal) {
+                EditBusinessModal(
+                    store = store,
+                    onImageSelected = { uri -> viewModel.onImageSelected(uri) },
+                    onSave = { name ->
+                        viewModel.updateBusinessWithImage(name)
+                        showEditModal = false
+                    },
+                    onDismiss = { showEditModal = false }
+                )
+            }
+
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color(0xFF9B51E0)
+                )
             }
         }
     }
 }
 
 @Composable
-fun BottomNavBar(
-    navController: NavController,
-    selectedItem: String, // Indica el elemento seleccionado, como "Inicio", "Tiendas", etc.
-    onItemSelected: (String) -> Unit // Acción a realizar cuando se selecciona un elemento
+fun EditBusinessModal(
+    store: Store?,
+    onImageSelected: (Uri) -> Unit,
+    onSave: (String) -> Unit,
+    onDismiss: () -> Unit
 ) {
-    BottomNavigation(
-        backgroundColor = Color(0xFFF3F3F3), // Fondo gris claro
-        contentColor = Color(0xFF4E4376) // Color de los íconos y texto
-    ) {
-        val items = listOf(
-            NavBarItem("Inicio", Icons.Default.Home, "Inicio"),
-            NavBarItem("Tiendas", Icons.Default.ShoppingCart, "Tiendas"),
-            NavBarItem("Órdenes", ImageVector.vectorResource(id = R.drawable.store_svgrepo_com), "Órdenes"),
-            NavBarItem("Perfil", Icons.Default.Person, "Perfil")
-        )
+    var businessName by remember { mutableStateOf(store?.name ?: "") }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { onImageSelected(it) }
+    }
 
-        items.forEach { item ->
-            BottomNavigationItem(
-                icon = {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.label,
-                        modifier = Modifier.size(24.dp) // Tamaño del ícono
-                    )
-                },
-                label = {
-                    Text(
-                        text = item.label,
-                        fontSize = 12.sp, // Tamaño de texto
-                        color = if (selectedItem == item.label) Color(0xFF4E4376) else Color.Gray // Resalta el seleccionado
-                    )
-                },
-                selected = selectedItem == item.label,
-                onClick = { onItemSelected(item.label) },
-                alwaysShowLabel = true, // Muestra las etiquetas debajo de los íconos
-                selectedContentColor = Color(0xFF4E4376), // Morado oscuro para el seleccionado
-                unselectedContentColor = Color.Gray
-            )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0x80000000))
+            .clickable { onDismiss() }
+    ) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .padding(16.dp)
+                .align(Alignment.Center)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "EDITAR NEGOCIO",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Color(0xFF4E4376),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                OutlinedTextField(
+                    value = businessName,
+                    onValueChange = { businessName = it },
+                    label = { Text("Nombre del negocio") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { launcher.launch("image/*") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Seleccionar Imagen")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { onSave(businessName) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9B51E0)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(text = "Guardar", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            }
         }
     }
-}
-
-data class NavBarItem(
-    val route: String,
-    val icon: ImageVector,
-    val label: String
-)
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewProfileEditBusinessScreenWithBottomNavBar() {
-    val fakeStore = Store(
-        id = "1",
-        name = "Inventory Hub",
-        owner = "Edison Ortiz",
-        business_image = ""
-    )
-    val fakeViewModel = object : ProfileBusinessViewModel() {
-        override val store = fakeStore
-    }
-
-    val navController = rememberNavController()
-
-    ProfileEditBusinessScreen(
-        navController = navController,
-        viewModel = fakeViewModel
-    )
 }
