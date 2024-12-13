@@ -43,7 +43,7 @@ fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
         }
         viewModel.fetchToken(context)
         viewModel.fetchStore()
-        viewModel.fetchUniqueStore()
+       viewModel.fetchUniqueStore()
     }
     val user by viewModel.user.observeAsState(User("", "", "", "", "", ""))
 
