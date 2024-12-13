@@ -123,15 +123,7 @@ fun BusinessScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            Text(
-                                text = "Transacciones",
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    color = Color.White,
-                                    fontSize = 40.sp,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp)) // Espacio entre el texto y el ícono
+                            Spacer(modifier = Modifier.width(4.dp)) // Espacio entre el texto y el ícono
                             IconButton(onClick = {
                                 navController.navigate("edit_business_profile/${storee.id}")
                             }) {
@@ -141,6 +133,14 @@ fun BusinessScreen(
                                     tint = Color.White // Cambia el color si es necesario
                                 )
                             }
+                            Text(
+                                text = "Transacciones",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    color = Color.White,
+                                    fontSize = 40.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            )
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         StatsCard(modifier = Modifier.padding(horizontal = 16.dp), viewModel, navController)
