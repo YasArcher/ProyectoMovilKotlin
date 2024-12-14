@@ -323,7 +323,6 @@ fun VendedorHomeScreenPreview() {
     val navController = rememberNavController()
     val fakeViewModel = object : HomeViewModel() {
         override fun fetchStore() {}
-        override fun fetchToken(context: Context) {}
     }
     VendedorHomeScreen(viewModel = fakeViewModel, navController = navController)
 }

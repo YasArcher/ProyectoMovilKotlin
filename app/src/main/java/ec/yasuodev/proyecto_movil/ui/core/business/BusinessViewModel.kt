@@ -17,6 +17,7 @@ import androidx.lifecycle.viewModelScope
 import ec.yasuodev.proyecto_movil.R
 import ec.yasuodev.proyecto_movil.ui.core.models.AddState
 import ec.yasuodev.proyecto_movil.ui.shared.models.AuxiliarSaleProduct
+import ec.yasuodev.proyecto_movil.ui.shared.models.Invoice
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import ec.yasuodev.proyecto_movil.ui.shared.models.Purchase
 import ec.yasuodev.proyecto_movil.ui.shared.models.Sale
@@ -39,6 +40,8 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
     open val expenditures: LiveData<Double> = _expenditures
     private val _salesList = MutableLiveData<List<Sale>>(emptyList())
     val salesList: LiveData<List<Sale>> = _salesList
+    private val _invoiceList = MutableLiveData<List<Invoice>>(emptyList())
+    val invoiceList: LiveData<List<Invoice>> = _invoiceList
     private val _purchasesList = MutableLiveData<List<Purchase>>(emptyList())
     open val purchasesList: LiveData<List<Purchase>> = _purchasesList
     private val _productsModel = MutableLiveData<List<AuxiliarSaleProduct>>(emptyList())
@@ -121,8 +124,8 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
                 println(e)
             }
         }
-        fetchProducts(id)
-        getSalesByDate(id, java.time.LocalDate.now().toString())
+        //fetchProducts(id)
+        //getSalesByDate(id, java.time.LocalDate.now().toString())
     }
 
     suspend fun onAddSelected() {
@@ -149,12 +152,14 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
                     }
                 }.decodeList<Product>()
                 _products.value = response
-                getSalesByDate(store_id, java.time.LocalDate.now().toString())
+                //getSalesByDate(store_id, java.time.LocalDate.now().toString())
+                getInvoicesByDate(store_id, java.time.LocalDate.now().toString())
             } catch (e: Exception) {
                 println(e)
             }
         }
     }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun addSaleProduct(product: Product, quantity: Int, seled_by: String) {
@@ -332,6 +337,38 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
         }
     }
 
+    fun getInvoicesByDate(store_id: String, date: String) {
+        viewModelScope.launch {
+            try {
+                val response = SupabaseClient.client.from("invoices").select(
+                    columns = Columns.list(
+                        "id",
+                        "client",
+                        "business_id",
+                        "value",
+                        "create_at"
+                    )
+                ) {
+                    filter {
+                        eq("create_at", date)
+                        eq("business_id", store_id)
+                    }
+                }.decodeList<Invoice>()
+                val invoicesList = mutableListOf<Invoice>()
+                var totalIncome = 0.0
+
+                response.forEach {
+                    invoicesList.add(it)
+                    totalIncome += it.value
+                }
+                _invoiceList.value = invoicesList
+                _income.value = totalIncome
+                makeAuxiliarSaleProduct()
+            } catch (e: Exception) {
+                println(e)
+            }
+        }
+    }
 
     private fun getSalesByDate(store_id: String, date: String) {
         viewModelScope.launch {
@@ -374,14 +411,14 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
                 val response = SupabaseClient.client.from("purchases").select(
                     columns = Columns.list(
                         "id",
-                        "created_at",
+                        "create_at",
                         "business_id",
                         "amount",
                         "reason"
                     )
                 ) {
                     filter {
-                        eq("created_at", date)
+                        eq("create_at", date)
                         eq("business_id", store_id)
                     }
                 }.decodeList<Purchase>()

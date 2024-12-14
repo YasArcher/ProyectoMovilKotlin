@@ -2,6 +2,7 @@ package ec.yasuodev.proyecto_movil.ui.core.business
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -78,6 +80,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.navigation.compose.rememberNavController
+import ec.yasuodev.proyecto_movil.ui.shared.models.Invoice
 
 enum class TransactionType {
     SALE, PURCHASE
@@ -94,6 +97,7 @@ fun BusinessScreen(
     val storee by viewModel.store.observeAsState(Store("", "", "", ""))
     LaunchedEffect(key1 = viewModel) {
         viewModel.fetchBusiness(store)
+        viewModel.getInvoicesByDate(store, java.time.LocalDate.now().toString())
     }
     Scaffold(
         containerColor = Color(0xFFF5F5F5) // Fondo claro
@@ -164,7 +168,7 @@ fun BusinessContent(
     storeID: String,
     seller: String
 ) {
-    val store by viewModel.store.observeAsState(Store("", "", "", ""))
+   // val store by viewModel.store.observeAsState(Store("", "", "", ""))
     val showDialog by viewModel.showDialog.observeAsState(false)
     var expanded by remember { mutableStateOf(false) }
     var transactionType by remember { mutableStateOf(TransactionType.SALE) }
@@ -415,14 +419,14 @@ fun BusinessContent(
     if (showDialog) {
         when (transactionType) {
             TransactionType.SALE -> {
-                ProductSelectionDialog(
-                    viewModel = viewModel,
-                    onDismiss = { viewModel.showDialog(false) },
-                    onProductSelected = { product, quantity ->
-                        viewModel.showDialog(false)
-                    },
-                    seller
-                )
+//                ProductSelectionDialog(
+//                    viewModel = viewModel,
+//                    onDismiss = { viewModel.showDialog(false) },
+//                    onProductSelected = { product, quantity ->
+//                        viewModel.showDialog(false)
+//                    },
+//                    seller
+//                )
             }
 
             TransactionType.PURCHASE -> {
@@ -522,6 +526,8 @@ fun SalesList(
     modifier: Modifier,
 ) {
     val productsModel by viewModel.productsModel.observeAsState(emptyList())
+    val invoiceList by viewModel.invoiceList.observeAsState(emptyList())
+    Log.d("SalesList", "SalesList: $invoiceList")
     ElevatedCard(
 
         modifier = modifier.fillMaxWidth().background( color = Color(0xFF9B86BE)),
@@ -530,8 +536,8 @@ fun SalesList(
         shape = RectangleShape
     ) {
         LazyColumn {
-            items(productsModel) { product ->
-                SaleCard(product, viewModel = viewModel)
+            items(invoiceList) { invoice ->
+                SaleCard(invoice, viewModel = viewModel)
             }
         }
     }
@@ -539,17 +545,17 @@ fun SalesList(
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
+fun SaleCard(invoice: Invoice, viewModel: BusinessViewModel) {
     var showEditDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    if (showEditDialog) {
-        EditSaleDialog(
-            viewModel = viewModel,
-            sale = product,
-            onDismiss = { showEditDialog = false })
-    }
+//    if (showEditDialog) {
+//        EditSaleDialog(
+//            viewModel = viewModel,
+//            sale = product,
+//            onDismiss = { showEditDialog = false })
+//    }
 
     Column(
 
@@ -568,7 +574,7 @@ fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
         ) {
             // Texto del Producto
             Text(
-                text = product.productName,
+                text = invoice.client,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 color =  Color(0xFF363062),
                 modifier = Modifier.weight(1.5f)
@@ -576,7 +582,7 @@ fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
 
             // Cantidad
             Text(
-                text = "${product.quantity}",
+                text = "Borrar",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF363062),
                 modifier = Modifier.weight(1f)
@@ -584,48 +590,61 @@ fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
 
             // Total
             Text(
-                text = "${product.total.format(2)}",
+                text = "${invoice.value.format(2)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color =  Color(0xFF363062),
                 modifier = Modifier.weight(1f)
             )
-
-            // Botón de Editar
+            // Botón de ver más
             IconButton(
-                onClick = { showEditDialog = true },
+                onClick = {
+                    //manejar modal para ver detalles
+                },
                 modifier = Modifier.size(24.dp) // Tamaño del icono más pequeño
             ) {
                 Icon(
-                    Icons.Filled.Edit,
-                    contentDescription = "Editar",
+                    Icons.Filled.Info,
+                    contentDescription = "Ver",
                     tint =  Color(0xFF72BF85), // Color verde similar al icono de la imagen
                     modifier = Modifier.size(24.dp)
                 )
             }
 
-            // Botón de Eliminar
-            IconButton(
-                onClick = {
-                    coroutineScope.launch {
-                        viewModel.deleteSaleProduct(product.id).apply {
-                            Toast.makeText(
-                                context,
-                                "Eliminando Venta",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                    viewModel.deleteSaleProduct(product.id)
-                },
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    Icons.Filled.Delete,
-                    contentDescription = "Eliminar",
-                    tint =  Color(0xFF72BF85),
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+//            // Botón de Editar
+//            IconButton(
+//                onClick = { showEditDialog = true },
+//                modifier = Modifier.size(24.dp) // Tamaño del icono más pequeño
+//            ) {
+//                Icon(
+//                    Icons.Filled.Edit,
+//                    contentDescription = "Editar",
+//                    tint =  Color(0xFF72BF85), // Color verde similar al icono de la imagen
+//                    modifier = Modifier.size(24.dp)
+//                )
+//            }
+//
+//            // Botón de Eliminar
+//            IconButton(
+//                onClick = {
+////                    coroutineScope.launch {
+////                        viewModel.deleteSaleProduct(product.id).apply {
+////                            Toast.makeText(
+////                                context,
+////                                "Eliminando Venta",
+////                                Toast.LENGTH_SHORT
+////                            ).show()
+////                        }
+////                    }
+//                },
+//                modifier = Modifier.size(24.dp)
+//            ) {
+//                Icon(
+//                    Icons.Filled.Delete,
+//                    contentDescription = "Eliminar",
+//                    tint =  Color(0xFF72BF85),
+//                    modifier = Modifier.size(24.dp)
+//                )
+//            }
         }
     }
 }
@@ -633,124 +652,124 @@ fun SaleCard(product: AuxiliarSaleProduct, viewModel: BusinessViewModel) {
 
 
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun ProductSelectionDialog(
-    viewModel: BusinessViewModel,
-    onDismiss: () -> Unit,
-    onProductSelected: (product: Product, quantity: Int) -> Unit,
-    seller: String
-) {
-    val coroutineScope = rememberCoroutineScope()
-    var searchQuery by remember { mutableStateOf("") }
-    val filteredProducts by viewModel.filteredProducts.observeAsState(emptyList())
-    var selectedProduct by remember { mutableStateOf<Product?>(null) }
-    var quantity by remember { mutableIntStateOf(1) }
-    val context = LocalContext.current
-    val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
-
-    LaunchedEffect(searchQuery) {
-        viewModel.filterProducts(searchQuery)
-    }
-
-    LaunchedEffect(addState) {
-        if (addState is AddState.Success) {
-            onDismiss()
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = { onDismiss() },
-        title = { Text("Seleccionar Producto", style = MaterialTheme.typography.titleMedium) },
-        text = {
-            Column {
-                TextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("Buscar producto") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyLarge
-                )
-                LazyColumn(modifier = Modifier.height(200.dp)) {
-                    items(filteredProducts) { product ->
-                        if (product.stock > 0) {
-                            SaleRow(product, isSelected = selectedProduct?.id == product.id) {
-                                selectedProduct = product
-                                searchQuery = product.name
-                            }
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                QuantitySelector(
-                    quantity,
-                    onQuantityChange = { quantity = it },
-                    selectedProduct?.stock ?: 0
-                )
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Button(
-                        onClick = { onDismiss() },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Text("Cancelar", color = Color.White)
-                    }
-                    Spacer(Modifier.width(16.dp))
-                    Button(
-                        onClick = {
-                            selectedProduct?.let {
-                                onProductSelected(it, quantity)
-                                coroutineScope.launch {
-                                    viewModel.addSaleProduct(it, quantity, seller).apply {
-                                        Toast.makeText(
-                                            context,
-                                            "Agregando Venta",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                    viewModel.onAddSelected().apply {
-                                        when (addState) {
-                                            is AddState.Success -> {
-                                                Toast.makeText(
-                                                    context,
-                                                    (addState as AddState.Success).message,
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-
-                                            is AddState.Error -> {
-                                                Toast.makeText(
-                                                    context,
-                                                    (addState as AddState.Error).message,
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-
-                                            else -> Unit
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        enabled = selectedProduct != null && quantity <= (selectedProduct?.stock
-                            ?: 0)
-                    ) {
-                        Text("Agregar", color = Color.White)
-                    }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {}
-    )
-}
+//@RequiresApi(Build.VERSION_CODES.O)
+//@Composable
+//fun ProductSelectionDialog(
+//    viewModel: BusinessViewModel,
+//    onDismiss: () -> Unit,
+//    onProductSelected: (product: Product, quantity: Int) -> Unit,
+//    seller: String
+//) {
+//    val coroutineScope = rememberCoroutineScope()
+//    var searchQuery by remember { mutableStateOf("") }
+//    val filteredProducts by viewModel.filteredProducts.observeAsState(emptyList())
+//    var selectedProduct by remember { mutableStateOf<Product?>(null) }
+//    var quantity by remember { mutableIntStateOf(1) }
+//    val context = LocalContext.current
+//    val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
+//
+//    LaunchedEffect(searchQuery) {
+//        viewModel.filterProducts(searchQuery)
+//    }
+//
+//    LaunchedEffect(addState) {
+//        if (addState is AddState.Success) {
+//            onDismiss()
+//        }
+//    }
+//
+//    AlertDialog(
+//        onDismissRequest = { onDismiss() },
+//        title = { Text("Seleccionar Producto", style = MaterialTheme.typography.titleMedium) },
+//        text = {
+//            Column {
+//                TextField(
+//                    value = searchQuery,
+//                    onValueChange = { searchQuery = it },
+//                    label = { Text("Buscar producto") },
+//                    modifier = Modifier.fillMaxWidth(),
+//                    singleLine = true,
+//                    textStyle = MaterialTheme.typography.bodyLarge
+//                )
+//                LazyColumn(modifier = Modifier.height(200.dp)) {
+//                    items(filteredProducts) { product ->
+//                        if (product.stock > 0) {
+//                            SaleRow(product, isSelected = selectedProduct?.id == product.id) {
+//                                selectedProduct = product
+//                                searchQuery = product.name
+//                            }
+//                        }
+//                    }
+//                }
+//                Spacer(modifier = Modifier.height(8.dp))
+//                QuantitySelector(
+//                    quantity,
+//                    onQuantityChange = { quantity = it },
+//                    selectedProduct?.stock ?: 0
+//                )
+//                Divider(modifier = Modifier.padding(vertical = 8.dp))
+//                Row(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(top = 16.dp),
+//                    horizontalArrangement = Arrangement.Center
+//                ) {
+//                    Button(
+//                        onClick = { onDismiss() },
+//                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+//                    ) {
+//                        Text("Cancelar", color = Color.White)
+//                    }
+//                    Spacer(Modifier.width(16.dp))
+//                    Button(
+//                        onClick = {
+//                            selectedProduct?.let {
+//                                onProductSelected(it, quantity)
+//                                coroutineScope.launch {
+//                                    viewModel.addSaleProduct(it, quantity, seller).apply {
+//                                        Toast.makeText(
+//                                            context,
+//                                            "Agregando Venta",
+//                                            Toast.LENGTH_SHORT
+//                                        ).show()
+//                                    }
+//                                    viewModel.onAddSelected().apply {
+//                                        when (addState) {
+//                                            is AddState.Success -> {
+//                                                Toast.makeText(
+//                                                    context,
+//                                                    (addState as AddState.Success).message,
+//                                                    Toast.LENGTH_SHORT
+//                                                ).show()
+//                                            }
+//
+//                                            is AddState.Error -> {
+//                                                Toast.makeText(
+//                                                    context,
+//                                                    (addState as AddState.Error).message,
+//                                                    Toast.LENGTH_SHORT
+//                                                ).show()
+//                                            }
+//
+//                                            else -> Unit
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        },
+//                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+//                        enabled = selectedProduct != null && quantity <= (selectedProduct?.stock
+//                            ?: 0)
+//                    ) {
+//                        Text("Agregar", color = Color.White)
+//                    }
+//                }
+//            }
+//        },
+//        confirmButton = {},
+//        dismissButton = {}
+//    )
+//}
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -897,102 +916,102 @@ fun QuantitySelector(quantity: Int, onQuantityChange: (Int) -> Unit, maxQuantity
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun EditSaleDialog(
-    viewModel: BusinessViewModel,
-    sale: AuxiliarSaleProduct,
-    onDismiss: () -> Unit
-) {
-    val coroutineScope = rememberCoroutineScope()
-    var quantity by remember { mutableIntStateOf(sale.quantity) }
-    val context = LocalContext.current
-    val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
-
-    LaunchedEffect(addState) {
-        if (addState is AddState.Success) {
-            onDismiss()
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = { onDismiss() },
-        title = { Text("Editar Venta", style = MaterialTheme.typography.titleMedium) },
-        text = {
-            Column {
-                Text("Producto: ${sale.productName}", style = MaterialTheme.typography.bodyLarge)
-                Spacer(modifier = Modifier.height(8.dp))
-                QuantitySelector(
-                    quantity,
-                    onQuantityChange = { quantity = it },
-                    maxQuantity = sale.productStock + sale.quantity
-                )
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-            }
-        },
-        confirmButton = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Button(
-                    onClick = { onDismiss() },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text("Cancelar", color = Color.White)
-                }
-                Spacer(Modifier.width(16.dp))
-                Button(
-                    onClick = {
-                        if (quantity in 1..(sale.productStock + sale.quantity)) {
-                            val updatedSale = sale.copy(
-                                quantity = quantity,
-                                total = (quantity * sale.productPrice).toDouble()
-                            )
-                            coroutineScope.launch {
-                                viewModel.updateSaleProduct(updatedSale.toSale()).apply {
-                                    Toast.makeText(
-                                        context,
-                                        "Actualizando Venta",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                                viewModel.onAddSelected().apply {
-                                    when (addState) {
-                                        is AddState.Success -> {
-                                            Toast.makeText(
-                                                context,
-                                                (addState as AddState.Success).message,
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-
-                                        is AddState.Error -> {
-                                            Toast.makeText(
-                                                context,
-                                                (addState as AddState.Error).message,
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-
-                                        else -> Unit
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    enabled = quantity in 1..(sale.productStock + sale.quantity)
-                ) {
-                    Text("Actualizar", color = Color.White)
-                }
-            }
-        },
-        dismissButton = {}
-    )
-}
+//@RequiresApi(Build.VERSION_CODES.O)
+//@Composable
+//fun EditSaleDialog(
+//    viewModel: BusinessViewModel,
+//    sale: AuxiliarSaleProduct,
+//    onDismiss: () -> Unit
+//) {
+//    val coroutineScope = rememberCoroutineScope()
+//    var quantity by remember { mutableIntStateOf(sale.quantity) }
+//    val context = LocalContext.current
+//    val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
+//
+//    LaunchedEffect(addState) {
+//        if (addState is AddState.Success) {
+//            onDismiss()
+//        }
+//    }
+//
+//    AlertDialog(
+//        onDismissRequest = { onDismiss() },
+//        title = { Text("Editar Venta", style = MaterialTheme.typography.titleMedium) },
+//        text = {
+//            Column {
+//                Text("Producto: ${sale.productName}", style = MaterialTheme.typography.bodyLarge)
+//                Spacer(modifier = Modifier.height(8.dp))
+//                QuantitySelector(
+//                    quantity,
+//                    onQuantityChange = { quantity = it },
+//                    maxQuantity = sale.productStock + sale.quantity
+//                )
+//                Divider(modifier = Modifier.padding(vertical = 8.dp))
+//            }
+//        },
+//        confirmButton = {
+//            Row(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(top = 16.dp),
+//                horizontalArrangement = Arrangement.Center
+//            ) {
+//                Button(
+//                    onClick = { onDismiss() },
+//                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+//                ) {
+//                    Text("Cancelar", color = Color.White)
+//                }
+//                Spacer(Modifier.width(16.dp))
+//                Button(
+//                    onClick = {
+//                        if (quantity in 1..(sale.productStock + sale.quantity)) {
+//                            val updatedSale = sale.copy(
+//                                quantity = quantity,
+//                                total = (quantity * sale.productPrice).toDouble()
+//                            )
+//                            coroutineScope.launch {
+//                                viewModel.updateSaleProduct(updatedSale.toSale()).apply {
+//                                    Toast.makeText(
+//                                        context,
+//                                        "Actualizando Venta",
+//                                        Toast.LENGTH_SHORT
+//                                    ).show()
+//                                }
+//                                viewModel.onAddSelected().apply {
+//                                    when (addState) {
+//                                        is AddState.Success -> {
+//                                            Toast.makeText(
+//                                                context,
+//                                                (addState as AddState.Success).message,
+//                                                Toast.LENGTH_SHORT
+//                                            ).show()
+//                                        }
+//
+//                                        is AddState.Error -> {
+//                                            Toast.makeText(
+//                                                context,
+//                                                (addState as AddState.Error).message,
+//                                                Toast.LENGTH_SHORT
+//                                            ).show()
+//                                        }
+//
+//                                        else -> Unit
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    },
+//                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+//                    enabled = quantity in 1..(sale.productStock + sale.quantity)
+//                ) {
+//                    Text("Actualizar", color = Color.White)
+//                }
+//            }
+//        },
+//        dismissButton = {}
+//    )
+//}
 
 private fun AuxiliarSaleProduct.toSale(): Sale {
     return Sale(
