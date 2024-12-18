@@ -63,7 +63,8 @@ open class HomeViewModel : ViewModel() {
                     id = generateUUID(),
                     name = name,
                     owner = userId.toString(),
-                    business_image = ""
+                    business_image = "",
+                    status = false
                 )
                 try {
                     SupabaseClient.client.from("business").insert(

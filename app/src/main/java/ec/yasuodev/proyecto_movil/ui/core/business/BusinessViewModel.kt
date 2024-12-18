@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -112,7 +113,8 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
                         "id",
                         "name",
                         "owner",
-                        "business_image"
+                        "business_image",
+                        "status"
                     )
                 ) {
                     filter {
@@ -338,20 +340,21 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
     }
 
     fun getInvoicesByDate(store_id: String, date: String) {
+        Log.d("BusinessViewModel", "getInvoicesByDate: $date, business: $store_id")
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("invoices").select(
                     columns = Columns.list(
                         "id",
                         "client",
-                        "business_id",
+                        "business",
                         "value",
                         "create_at"
                     )
                 ) {
                     filter {
                         eq("create_at", date)
-                        eq("business_id", store_id)
+                        eq("business", store_id)
                     }
                 }.decodeList<Invoice>()
                 val invoicesList = mutableListOf<Invoice>()
@@ -365,9 +368,10 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
                 _income.value = totalIncome
                 makeAuxiliarSaleProduct()
             } catch (e: Exception) {
-                println(e)
+                Log.d("Error", "getInvoicesByDate: ${e.message}")
             }
         }
+        Log.d("BusinessViewModel", "getInvoicesByDate: ${_invoiceList.value}")
     }
 
     private fun getSalesByDate(store_id: String, date: String) {
@@ -412,14 +416,14 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
                     columns = Columns.list(
                         "id",
                         "create_at",
-                        "business_id",
+                        "business",
                         "amount",
                         "reason"
                     )
                 ) {
                     filter {
                         eq("create_at", date)
-                        eq("business_id", store_id)
+                        eq("business", store_id)
                     }
                 }.decodeList<Purchase>()
                 val expendituresList = mutableListOf<Purchase>()

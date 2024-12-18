@@ -6,6 +6,6 @@ import kotlinx.serialization.Serializable
 data class Invoice(
     val id: String,
     val client: String,
-    val business_Id: String,
+    val business: String,
     val value: Double,
 )

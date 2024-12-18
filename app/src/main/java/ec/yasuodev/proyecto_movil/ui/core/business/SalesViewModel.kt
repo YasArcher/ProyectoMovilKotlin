@@ -217,7 +217,7 @@ class SalesViewModel(private val context: Context) : ViewModel() {
         val invoice = Invoice(
             id = _invoiceId.value.toString(),
             client = seled_by,
-            business_Id = _store.value?.id.toString(),
+            business = _store.value?.id.toString(),
             value = _salesList.value?.sumOf { it.total } ?: 0.0
         )
 

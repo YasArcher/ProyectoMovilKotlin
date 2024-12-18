@@ -70,9 +70,9 @@ fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp) // Aplica el padding deseado aquí
                 ) {
-                    val store by viewModel.store.observeAsState(Store("", "", "", "")) // Observa el estado de la tienda
+                    val store by viewModel.store.observeAsState(Store("", "", "", "", false)) // Observa el estado de la tienda
                     VendedorBusinessCard(
-                        store = if (store.id.isNotBlank()) store else Store("", "Configure su negocio", "", ""),
+                        store = if (store.id.isNotBlank()) store else Store("", "Configure su negocio", "", "", false),
                         navController = navController,
                         user = user,
                         tipo = 1 // Puedes cambiar el tipo para aplicar un borde si deseas

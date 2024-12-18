@@ -78,7 +78,7 @@ fun ProductsScreen(viewModel: ProductsViewModel, navController: NavController) {
 @Composable
 fun ProductsContent(viewModel: ProductsViewModel, navController: NavController) {
     val context = LocalContext.current
-    val store: Store by viewModel.store.observeAsState(initial = Store("", "", "", ""))
+    val store: Store by viewModel.store.observeAsState(initial = Store("", "", "", "", false))
     val products: List<Product> by viewModel.products.observeAsState(initial = emptyList())
 
     LaunchedEffect(key1 = viewModel) {

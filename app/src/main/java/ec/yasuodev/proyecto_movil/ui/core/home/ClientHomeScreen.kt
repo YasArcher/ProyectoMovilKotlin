@@ -100,7 +100,7 @@ fun HomeTopBar(user: User) {
 
 @Composable
 fun ClientHomeContent(viewModel: HomeViewModel, navController: NavController, user: User, context: Context) {
-    val store by viewModel.store.observeAsState(Store("", "", "", ""))
+    val store by viewModel.store.observeAsState(Store("", "", "", "", false))
     val storeList by viewModel.storeList.observeAsState(listOf())
 
     Column(

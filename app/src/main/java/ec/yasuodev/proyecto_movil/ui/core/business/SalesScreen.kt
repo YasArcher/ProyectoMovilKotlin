@@ -61,7 +61,7 @@ fun SalesContent(
     storeID: String,
     seller: String
 ) {
-    val store by viewModel.store.observeAsState(Store("", "", "", ""))
+    val store by viewModel.store.observeAsState(Store("", "", "", "", false))
     val showDialog by viewModel.showDialog.observeAsState(false)
     var expanded by remember { mutableStateOf(false) }
     var transactionType by remember { mutableStateOf(TransactionType.SALE) }

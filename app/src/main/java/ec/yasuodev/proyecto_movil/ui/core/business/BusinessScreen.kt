@@ -94,7 +94,7 @@ fun BusinessScreen(
     store: String,
     seller: String
 ) {
-    val storee by viewModel.store.observeAsState(Store("", "", "", ""))
+    val storee by viewModel.store.observeAsState(Store("", "", "", "", false))
     LaunchedEffect(key1 = viewModel) {
         viewModel.fetchBusiness(store)
         viewModel.getInvoicesByDate(store, java.time.LocalDate.now().toString())
@@ -525,7 +525,6 @@ fun SalesList(
     viewModel: BusinessViewModel,
     modifier: Modifier,
 ) {
-    val productsModel by viewModel.productsModel.observeAsState(emptyList())
     val invoiceList by viewModel.invoiceList.observeAsState(emptyList())
     Log.d("SalesList", "SalesList: $invoiceList")
     ElevatedCard(
@@ -1240,7 +1239,7 @@ fun EditPurchaseDialog(
 
 
 class FakeBusinessViewModel(context: Context) : BusinessViewModel(context) {
-    override val store: LiveData<Store> = MutableLiveData(Store("1", "Tienda de Prueba", "Ubicación", "Descripción"))
+    override val store: LiveData<Store> = MutableLiveData(Store("1", "Tienda de Prueba", "Ubicación", "Descripción", false))
     override val income: LiveData<Double> = MutableLiveData(1000.0)
     override val expenditures: LiveData<Double> = MutableLiveData(500.0)
     override val productsModel: LiveData<List<AuxiliarSaleProduct>> = MutableLiveData(
