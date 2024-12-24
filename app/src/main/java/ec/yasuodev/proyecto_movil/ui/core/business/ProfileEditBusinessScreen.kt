@@ -117,7 +117,7 @@ fun ProfileEditBusinessScreen(
                     )
                 }
 
-                IconButton(onClick = { navController.navigate("home") }) {
+                IconButton(onClick = { navController.navigate("clientHome") }) {
                     Icon(
                         imageVector = Icons.Default.Home,
                         contentDescription = "Home Icon",

@@ -1,6 +1,7 @@
 package ec.yasuodev.proyecto_movil.ui.core.products
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -61,6 +62,7 @@ class ProductsViewModel: ViewModel() {
                     }
                 }.decodeList<Product>()
                 _products.value = response
+                Log.d("ProductsViewModel", "Productos: ${_products.value?.size}")
             } catch (e: Exception) {
                 e.printStackTrace()
             }

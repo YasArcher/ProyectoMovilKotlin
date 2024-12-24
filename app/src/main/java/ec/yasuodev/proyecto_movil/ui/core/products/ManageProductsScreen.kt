@@ -65,7 +65,7 @@ fun ManageProductsScreen(navController: NavController) { // Added navController 
 
     Scaffold(
         bottomBar = {
-            BottomNavBar(
+            BottomNavBar1(
                 navController = navController, // Pass navController to BottomNavBar
                 selectedItem = "Inicio", // Marca "Inicio" como seleccionado
                 onItemSelected = { selectedItem -> // Manejo de la navegación según el elemento seleccionado
@@ -177,7 +177,7 @@ fun ManageProductsScreen(navController: NavController) { // Added navController 
                     if ("Producto $index".contains(searchQuery, ignoreCase = true)) {
                         ProductItem(
                             name = "Producto $index",
-                            price = 20 + index,
+                            price = (20 + index).toDouble(),
                             stock = 50 - index,
                             imageUrl = "https://via.placeholder.com/150",
                             onEditClick = {
@@ -217,7 +217,7 @@ fun ManageProductsScreen(navController: NavController) { // Added navController 
 }
 
 @Composable
-fun BottomNavBar(
+fun BottomNavBar1(
     navController: NavController, // Added navController as a parameter
     selectedItem: String,
     onItemSelected: (String) -> Unit
@@ -256,10 +256,10 @@ fun BottomNavBar(
     }
 }
 
-data class NavBarItem(val route: String, val icon: ImageVector, val label: String)
+data class NavBarItem1(val route: String, val icon: ImageVector, val label: String)
 
 @Composable
-fun ProductItem(
+fun ProductItem1(
     name: String,
     price: Int,
     stock: Int,
@@ -304,7 +304,7 @@ fun ProductItem(
 }
 
 @Composable
-fun EditProductModal(
+fun EditProductModal1(
     productName: String,
     productPrice: String,
     productStock: String,
