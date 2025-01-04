@@ -14,13 +14,25 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import ec.yasuodev.proyecto_movil.R
 
 @Composable
-fun BottomNavigationBar(navController: NavController) {
-    val items = listOf(
-        BottomNavItem.Home,
-        BottomNavItem.Profile,
-        BottomNavItem.Products,
-        BottomNavItem.Settings
-    )
+fun BottomNavigationBar(navController: NavController, rol: String) {
+    val items = when (rol) {
+        "seller" -> listOf(
+            BottomNavItem.Home,
+            BottomNavItem.Profile,
+            BottomNavItem.Products,
+            BottomNavItem.Settings
+        )
+        "cliente" -> listOf(
+            BottomNavItem.Home,
+            BottomNavItem.Profile,
+            BottomNavItem.Shop, // Agregar ítem específico para clientes
+            BottomNavItem.Settings
+        )
+        else -> listOf(
+            BottomNavItem.Home,
+            BottomNavItem.Profile
+        )
+    }
 
     BottomNavigation(
         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -52,6 +64,7 @@ fun BottomNavigationBar(navController: NavController) {
 sealed class BottomNavItem(var title: String, var icon: Int, var route: String) {
     object Home : BottomNavItem("Home", R.drawable.home_24px, "home")
     object Profile : BottomNavItem("Perfil", R.drawable.person_24px, "profile")
-    object Products : BottomNavItem("Producto", R.drawable.grocery_24px, "products")
-    object Settings : BottomNavItem("Encargado", R.drawable.person_add_24px, "manager")
+    object Products : BottomNavItem("Productos", R.drawable.grocery_24px, "products")
+    object Settings : BottomNavItem("Configuración", R.drawable.settings_24px, "settings")
+    object Shop : BottomNavItem("Tienda", R.drawable.shopping_bag, "shop")
 }

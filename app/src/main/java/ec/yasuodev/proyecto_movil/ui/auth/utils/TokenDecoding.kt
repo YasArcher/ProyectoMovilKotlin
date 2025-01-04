@@ -26,6 +26,10 @@ object TokenDecoding {
      * @return The user ID extracted from the token.
      */
     fun extractUserID(decodedToken: Map<String, Any?>): String {
-        return decodedToken["userId"] as? String ?: "No UserID found"
+        return decodedToken["sub"] as? String
+            ?: decodedToken["user_metadata"]?.let {
+                (it as? Map<*, *>)?.get("sub") as? String
+            } ?: "No UserID found"
     }
+
 }

@@ -7,7 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import ec.yasuodev.proyecto_movil.ui.navigation.AppNavGraph
+import ec.yasuodev.proyecto_movil.ui.navigation.AppNavGraphMain
 import ec.yasuodev.proyecto_movil.ui.theme.ProyectomovilTheme
 
 class MainActivity : ComponentActivity() {
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ProyectomovilTheme {
-                AppNavGraph()
+                AppNavGraphMain()
             }
         }
         createNotificationChannel()

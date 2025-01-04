@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -51,22 +53,22 @@ import ec.yasuodev.proyecto_movil.ui.shared.models.User
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AppNavGraph() {
+fun ClientNavGraph() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val showBottomBar = currentRoute in listOf("home", "profile", "manager", "products")
+    val showBottomBar = currentRoute in listOf("clientHome", "profile", "manager", "products")
     val context = LocalContext.current;
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
-                BottomNavigationBar(navController = navController)
+                BottomNavigationBar(navController = navController, "client")
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "login",
+            startDestination = "clientHome",
             Modifier.padding(innerPadding)
         ) {
             composable("login") {
@@ -78,24 +80,13 @@ fun AppNavGraph() {
             composable("reset") {
                 ResetScreen(ResetViewModel(), navController)
             }
-            composable("home") {
-                HomeScreen(HomeViewModel(), navController)
-            }
+
             composable("clientHome") {
                 ClientHomeScreen(
                     viewModel = HomeViewModel(),
                     navController = navController
                 )
             }
-
-            composable("vendedorHome") {
-                VendedorHomeScreen(
-                    viewModel = HomeViewModel(),
-                    navController = navController
-                )
-            }
-
-
             composable("profile") {
                 ProfileScreen(ProfileViewModel(), navController)
             }

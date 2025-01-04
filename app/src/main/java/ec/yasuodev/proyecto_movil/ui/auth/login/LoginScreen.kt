@@ -1,5 +1,6 @@
 package ec.yasuodev.proyecto_movil.ui.auth.login
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,15 +32,17 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ec.yasuodev.proyecto_movil.R
 import ec.yasuodev.proyecto_movil.ui.auth.models.UserState
+import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenDecoding
+import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenDecoding.decodeJWT
 import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicButton
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicField
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicText
 import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(viewModel: LoginViewModel, navController: NavController) {
     Scaffold(
@@ -119,26 +122,26 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
     val passwordVisible: Boolean by viewModel.passwordVisible.observeAsState(initial = false)
     val userState: UserState by viewModel.userState.observeAsState(initial = UserState.Loading)
     val coroutineScope = rememberCoroutineScope()
+    val rol: String by viewModel.rol.observeAsState(initial = "")
 
     LaunchedEffect(key1 = viewModel) {
-        val sessionDetails = SupabaseClient.client.auth.currentSessionOrNull()
-
-        if (sessionDetails != null) {
-            sessionDetails.user?.let {
-                viewModel.fetchUserRole(it.id) { role ->
-                    println("idaaaaaaaaa"+it.id)
-                    println(sessionDetails)
-                    println("rolll"+role)
-                    when (role) {
-                        "client" -> navController.navigate("clientHome")
-                        "seller" -> navController.navigate("vendedorHome")
-                        else -> navController.navigate("home") // Redirige a una pantalla predeterminada si no tiene un rol definido
-                    }
-                }
+        if (TokenManager.getToken(context) != null) {
+            // Si el token ya está almacenado, obtiene el ID del usuario
+            val token = TokenManager.getToken(context)
+            // Decodifica el token para obtener el ID del usuario
+            val decToken = decodeJWT(token.toString())
+            // Extrae el ID del usuario del token decodificado
+            val userId = TokenDecoding.extractUserID(decToken)
+            Log.d("DEBUG", "ID del usuario: $userId")
+            // Obtiene el rol del usuario
+            viewModel.fetchUserRole(userId)
+            while (viewModel.rol.value.isNullOrEmpty()) {
+                delay(100) // Espera activa (mejor evitar en producción)
             }
+            // Navega a la pantalla correspondiente según el rol del usuario
+            viewModel.navigateBasedOnRole(rol, navController)
         }
     }
-
 
     Column(
         modifier = modifier.padding(horizontal = 32.dp)
@@ -204,8 +207,31 @@ fun Login(modifier: Modifier, viewModel: LoginViewModel, navController: NavContr
             enable = loginEnable,
             method = {
                 coroutineScope.launch {
-                    viewModel.signIn(context, email, password, navController).apply {
+                    viewModel.signIn(context, email, password).apply {
                         Toast.makeText(context, "Iniciando sesión", Toast.LENGTH_SHORT).show()
+                    }
+                    viewModel.onLoginSelected().apply {
+                        when (userState) {
+                            is UserState.Success -> {
+                                Toast.makeText(
+                                    context,
+                                    (userState as UserState.Success).message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                //Navega a la pantalla correspondiente según el rol del usuario
+                                viewModel.navigateBasedOnRole(rol, navController)
+                            }
+
+                            is UserState.Error -> {
+                                Toast.makeText(
+                                    context,
+                                    (userState as UserState.Error).message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                            else -> Unit
+                        }
                     }
                 }
             },

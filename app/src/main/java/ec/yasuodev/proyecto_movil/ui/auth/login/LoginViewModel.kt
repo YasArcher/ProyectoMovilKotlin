@@ -1,6 +1,7 @@
 package ec.yasuodev.proyecto_movil.ui.auth.login
 
 import android.content.Context
+import android.util.Log
 import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -31,6 +32,8 @@ class LoginViewModel : ViewModel() {
     val userState: LiveData<UserState> = _userState
     private val _passwordVisible = MutableLiveData<Boolean>(false)
     val passwordVisible: LiveData<Boolean> = _passwordVisible
+    private val _rol = MutableLiveData<String>()
+    val rol: LiveData<String> = _rol
 
     fun togglePasswordVisibility() {
         _passwordVisible.value = _passwordVisible.value != true
@@ -74,7 +77,23 @@ class LoginViewModel : ViewModel() {
         delay(4000)
         _isLoading.value = false
     }
-    open fun fetchUserRole(userId: String, onRoleFetched: (String) -> Unit) {
+
+    fun navigateBasedOnRole(role: String, navController: NavController) {
+        Log.d("DEBUG", "Rol: $role")
+        when (role) {
+            "client" -> navController.navigate("clientNavGraph") {
+                Log.d("DEBUG", "navegando a cliente")
+                popUpTo("login") { inclusive = true }
+            }
+            "seller" -> navController.navigate("sellerNavGraph") {
+                Log.d("DEBUG", "navegando a vendedor")
+                popUpTo("login") { inclusive = true }
+            }
+            else -> navController.navigate("home")
+        }
+    }
+
+    fun fetchUserRole(userId: String) {
         viewModelScope.launch {
             try {
                 // Realiza la consulta a la tabla `users` para obtener el rol del usuario
@@ -85,12 +104,10 @@ class LoginViewModel : ViewModel() {
                         eq("id", userId) // Filtra por el ID del usuario
                     }
                 }.decodeSingle<Map<String, String>>() // Decodifica la respuesta como un mapa
-
-                val role = response["rol"] ?: "unknown" // Obtén el rol del mapa, o usa "unknown" por defecto
-                onRoleFetched(role) // Devuelve el rol a través del callback
+                _userState.value = UserState.Success("Rol Obtenido")
+                _rol.value = response["rol"] ?: "unknown" // Obtén el rol del mapa, o usa "unknown" por defecto
             } catch (e: Exception) {
-                e.printStackTrace()
-                onRoleFetched("unknown") // Maneja errores y devuelve un valor predeterminado
+                _userState.value = UserState.Error("Rol no Obtenido"+ e.message)
             }
         }
     }
@@ -98,8 +115,7 @@ class LoginViewModel : ViewModel() {
     fun signIn(
         context: Context,
         email: String,
-        password: String,
-        navController: NavController
+        password: String
     ) {
         viewModelScope.launch {
             try {
@@ -112,21 +128,12 @@ class LoginViewModel : ViewModel() {
                     TokenManager.saveToken(
                         context,
                         sessionDetails.toString(),
-                        sessionDetails.accessToken.toString()
+                        sessionDetails.accessToken
                     )
 
                     // Obtener el rol del usuario
                     sessionDetails.user?.let {
-                        fetchUserRole(it.id) { role ->
-                            println("idaaaaaaaaa"+it.id)
-                            println(sessionDetails)
-                            println("rolll"+role)
-                            when (role) {
-                                "client" -> navController.navigate("clientHome")
-                                "seller" -> navController.navigate("vendedorHome")
-                                else -> navController.navigate("home") // Redirige a una pantalla predeterminada si no tiene un rol definido
-                            }
-                        }
+                        fetchUserRole(it.id)
                     }
                 }
             } catch (e: Exception) {
@@ -134,61 +141,5 @@ class LoginViewModel : ViewModel() {
                     UserState.Error("Error al iniciar sesión: ${e.message}")
             }
         }
-    }
-
-
-    fun signOut(context: Context) {
-        viewModelScope.launch {
-            try {
-                SupabaseClient.client.auth.signOut()
-                TokenManager.clearToken(context)
-                _userState.value = UserState.Success("Cierre de sesión exitoso")
-            } catch (e: Exception) {
-                _userState.value = UserState.Error("Error al cerrar sesión: ${e.message}")
-            }
-        }
-    }
-
-    fun isUserLoggedIn(
-        context: Context
-    ) {
-        viewModelScope.launch {
-            try {
-                if (TokenManager.isTokenValid(context)) {
-                    TokenManager.getAccessToken(context)
-                        ?.let { SupabaseClient.client.auth.retrieveUser(it) }
-                    val sessionDetails = SupabaseClient.client.auth.currentSessionOrNull()
-                    if (sessionDetails != null) {
-                        TokenManager.saveToken(
-                            context,
-                            sessionDetails.toString(),
-                            sessionDetails.accessToken.toString()
-                        )
-                        _userState.value = UserState.Success("Inicio de sesión exitoso")
-                    }
-                    _userState.value = UserState.Success("Sesión verificada")
-                } else {
-                    _userState.value = UserState.Error("No se ha iniciado sesión")
-                }
-            } catch (e: Exception) {
-                _userState.value = UserState.Error("Error al verificar la sesión: ${e.message}")
-            }
-        }
-    }
-
-    fun forgotPassword(email: String) {
-        viewModelScope.launch {
-            try {
-                SupabaseClient.client.auth.resetPasswordForEmail(email)
-                _userState.value = UserState.Success("Correo de recuperación enviado")
-            } catch (e: Exception) {
-                _userState.value =
-                    UserState.Error("Error al enviar correo de recuperación: ${e.message}")
-            }
-        }
-    }
-
-    private fun generateUUID(): String {
-        return UUID.randomUUID().toString()
     }
 }
