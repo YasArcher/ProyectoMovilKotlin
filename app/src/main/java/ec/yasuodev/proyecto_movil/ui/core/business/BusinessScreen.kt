@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Divider
@@ -39,19 +40,16 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -69,16 +67,14 @@ import ec.yasuodev.proyecto_movil.ui.core.models.AddState
 import ec.yasuodev.proyecto_movil.ui.shared.models.AuxiliarSaleProduct
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import ec.yasuodev.proyecto_movil.ui.shared.models.Purchase
-import ec.yasuodev.proyecto_movil.ui.shared.models.Sale
+import ec.yasuodev.proyecto_movil.ui.shared.models.SaleTable
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import kotlinx.coroutines.launch
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.navigation.compose.rememberNavController
 import ec.yasuodev.proyecto_movil.ui.shared.models.Invoice
 
@@ -147,7 +143,11 @@ fun BusinessScreen(
                             )
                         }
                         Spacer(modifier = Modifier.height(16.dp))
-                        StatsCard(modifier = Modifier.padding(horizontal = 16.dp), viewModel, navController)
+                        StatsCard(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            viewModel,
+                            navController
+                        )
                     }
                 }
 
@@ -168,7 +168,7 @@ fun BusinessContent(
     storeID: String,
     seller: String
 ) {
-   // val store by viewModel.store.observeAsState(Store("", "", "", ""))
+    // val store by viewModel.store.observeAsState(Store("", "", "", ""))
     val showDialog by viewModel.showDialog.observeAsState(false)
     var expanded by remember { mutableStateOf(false) }
     var transactionType by remember { mutableStateOf(TransactionType.SALE) }
@@ -179,10 +179,12 @@ fun BusinessContent(
         viewModel.getExpendituresByDate(storeID, dateToday)
     }
 
-    Box(modifier.fillMaxSize()
-        .background(Color.White)) {
+    Box(
+        modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
         Column(modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-
 
 
             Spacer(modifier = Modifier.padding(10.dp))
@@ -208,14 +210,14 @@ fun BusinessContent(
                             modifier = Modifier
                                 .weight(1.3f)
                                 .background(
-                                    color =  Color(0xFF363062),
+                                    color = Color(0xFF363062),
                                     shape = RoundedCornerShape(16.dp) // Bordes redondeados
                                 )
                                 .padding(vertical = 8.dp, horizontal = 4.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "Producto",
+                                text = "Numero",
                                 style = MaterialTheme.typography.titleSmall.copy(
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
@@ -228,31 +230,9 @@ fun BusinessContent(
 
                         Box(
                             modifier = Modifier
-                                .weight(1.4f)
-                                .background(
-                                    color = Color(0xFF363062),
-                                    shape = RoundedCornerShape(16.dp)
-                                )
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Cantidad",
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp)) // Separación entre encabezados
-
-                        Box(
-                            modifier = Modifier
                                 .weight(1.3f)
                                 .background(
-                                    color =  Color(0xFF363062),
+                                    color = Color(0xFF363062),
                                     shape = RoundedCornerShape(16.dp)
                                 )
                                 .padding(vertical = 8.dp, horizontal = 4.dp),
@@ -274,7 +254,7 @@ fun BusinessContent(
                             modifier = Modifier
                                 .weight(1.5f)
                                 .background(
-                                    color =  Color(0xFF363062),
+                                    color = Color(0xFF363062),
                                     shape = RoundedCornerShape(16.dp)
                                 )
                                 .padding(vertical = 8.dp, horizontal = 4.dp),
@@ -299,9 +279,11 @@ fun BusinessContent(
 
                 Spacer(modifier = Modifier.padding(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Egresos del día", style = MaterialTheme.typography.titleSmall.copy(
-                        fontSize = 18.sp // Tamaño de fuente ajustado
-                    ), color = Color(0xFF6A3D98))
+                    Text(
+                        text = "Egresos del día", style = MaterialTheme.typography.titleSmall.copy(
+                            fontSize = 18.sp // Tamaño de fuente ajustado
+                        ), color = Color(0xFF6A3D98)
+                    )
                     Spacer(modifier = Modifier.padding(10.dp))
 
                     // Encabezado de la tabla con elementos separados y bordes redondeados
@@ -314,7 +296,7 @@ fun BusinessContent(
                             modifier = Modifier
                                 .weight(1.3f)
                                 .background(
-                                    color =  Color(0xFF363062),
+                                    color = Color(0xFF363062),
                                     shape = RoundedCornerShape(16.dp) // Bordes redondeados
                                 )
                                 .padding(vertical = 8.dp, horizontal = 4.dp),
@@ -336,7 +318,7 @@ fun BusinessContent(
                             modifier = Modifier
                                 .weight(1.4f)
                                 .background(
-                                    color =  Color(0xFF363062),
+                                    color = Color(0xFF363062),
                                     shape = RoundedCornerShape(16.dp)
                                 )
                                 .padding(vertical = 8.dp, horizontal = 4.dp),
@@ -358,7 +340,7 @@ fun BusinessContent(
                             modifier = Modifier
                                 .weight(1f)
                                 .background(
-                                    color = Color(0xFF363062)   ,
+                                    color = Color(0xFF363062),
                                     shape = RoundedCornerShape(16.dp)
                                 )
                                 .padding(vertical = 8.dp, horizontal = 4.dp),
@@ -485,7 +467,7 @@ fun StatsCard(modifier: Modifier, viewModel: BusinessViewModel, navController: N
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem("Ingresos", income,  Color(0xFF72BF85))
+                    StatItem("Ingresos", income, Color(0xFF72BF85))
                     StatItem("Egresos", expenditures, Color.Red)
                 }
             }
@@ -526,17 +508,18 @@ fun SalesList(
     modifier: Modifier,
 ) {
     val invoiceList by viewModel.invoiceList.observeAsState(emptyList())
-    Log.d("SalesList", "SalesList: $invoiceList")
     ElevatedCard(
 
-        modifier = modifier.fillMaxWidth().background( color = Color(0xFF9B86BE)),
+        modifier = modifier
+            .fillMaxWidth()
+            .background(color = Color(0xFF9B86BE)),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RectangleShape
     ) {
         LazyColumn {
-            items(invoiceList) { invoice ->
-                SaleCard(invoice, viewModel = viewModel)
+            itemsIndexed(invoiceList) {index ,invoice ->
+                SaleCard(index+1, invoice, viewModel = viewModel)
             }
         }
     }
@@ -544,7 +527,7 @@ fun SalesList(
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun SaleCard(invoice: Invoice, viewModel: BusinessViewModel) {
+fun SaleCard(index: Int, invoice: Invoice, viewModel: BusinessViewModel) {
     var showEditDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -573,25 +556,17 @@ fun SaleCard(invoice: Invoice, viewModel: BusinessViewModel) {
         ) {
             // Texto del Producto
             Text(
-                text = invoice.client,
+                text = "${index}.",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color =  Color(0xFF363062),
-                modifier = Modifier.weight(1.5f)
-            )
-
-            // Cantidad
-            Text(
-                text = "Borrar",
-                style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF363062),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1.5f)
             )
 
             // Total
             Text(
-                text = "${invoice.value.format(2)}",
+                text = invoice.value.format(2),
                 style = MaterialTheme.typography.bodyMedium,
-                color =  Color(0xFF363062),
+                color = Color(0xFF363062),
                 modifier = Modifier.weight(1f)
             )
             // Botón de ver más
@@ -604,7 +579,7 @@ fun SaleCard(invoice: Invoice, viewModel: BusinessViewModel) {
                 Icon(
                     Icons.Filled.Info,
                     contentDescription = "Ver",
-                    tint =  Color(0xFF72BF85), // Color verde similar al icono de la imagen
+                    tint = Color(0xFF72BF85), // Color verde similar al icono de la imagen
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -647,8 +622,6 @@ fun SaleCard(invoice: Invoice, viewModel: BusinessViewModel) {
         }
     }
 }
-
-
 
 
 //@RequiresApi(Build.VERSION_CODES.O)
@@ -1012,8 +985,8 @@ fun QuantitySelector(quantity: Int, onQuantityChange: (Int) -> Unit, maxQuantity
 //    )
 //}
 
-private fun AuxiliarSaleProduct.toSale(): Sale {
-    return Sale(
+private fun AuxiliarSaleProduct.toSale(): SaleTable {
+    return SaleTable(
         id = this.id,
         created_at = this.created_at,
         total = this.total,
@@ -1075,7 +1048,7 @@ fun PurchaseCard(purchase: Purchase, viewModel: BusinessViewModel) {
             Text(
                 text = purchase.reason,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                color =  Color(0xFF363062),
+                color = Color(0xFF363062),
                 modifier = Modifier.weight(1.5f)
             )
 
@@ -1083,7 +1056,7 @@ fun PurchaseCard(purchase: Purchase, viewModel: BusinessViewModel) {
             Text(
                 text = "${purchase.amount}",
                 style = MaterialTheme.typography.bodyMedium,
-                color =  Color(0xFF363062),
+                color = Color(0xFF363062),
                 modifier = Modifier.weight(1f)
             )
 
@@ -1095,7 +1068,7 @@ fun PurchaseCard(purchase: Purchase, viewModel: BusinessViewModel) {
                 Icon(
                     Icons.Filled.Edit,
                     contentDescription = "Editar",
-                    tint =  Color(0xFF72BF85), // Color verde similar al icono en SaleCard
+                    tint = Color(0xFF72BF85), // Color verde similar al icono en SaleCard
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -1234,60 +1207,5 @@ fun EditPurchaseDialog(
             }
         },
         dismissButton = {}
-    )
-}
-
-
-class FakeBusinessViewModel(context: Context) : BusinessViewModel(context) {
-    override val store: LiveData<Store> = MutableLiveData(Store("1", "Tienda de Prueba", "Ubicación", "Descripción", false))
-    override val income: LiveData<Double> = MutableLiveData(1000.0)
-    override val expenditures: LiveData<Double> = MutableLiveData(500.0)
-    override val productsModel: LiveData<List<AuxiliarSaleProduct>> = MutableLiveData(
-        listOf(
-            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
-            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
-            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
-            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
-            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
-            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
-            AuxiliarSaleProduct(id = "Producto A", total = 10.0, product = 100.0.toString(), productName = "1", quantity = 5),
-
-
-        )
-    )
-    override val purchasesList: LiveData<List<Purchase>> = MutableLiveData(
-        listOf(
-            Purchase(
-                id = "1",
-                reason = "Razón A",
-                created_at = "2023-01-01", // Ejemplo de fecha
-                business_id = "business_id_123", // ID del negocio
-                amount = 30.0 // Cantidad del egreso
-            ),
-            Purchase(
-                id = "2",
-                reason = "Razón B",
-                created_at = "2023-01-02",
-                business_id = "business_id_456",
-                amount = 20.0
-            )
-        )
-    )
-
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun BusinessScreenPreview() {
-    val navController = rememberNavController()
-    val context = LocalContext.current
-    val fakeViewModel = FakeBusinessViewModel(context)
-
-    BusinessScreen(
-        viewModel = fakeViewModel,
-        navController = navController,
-        store = "1",
-        seller = "seller"
     )
 }

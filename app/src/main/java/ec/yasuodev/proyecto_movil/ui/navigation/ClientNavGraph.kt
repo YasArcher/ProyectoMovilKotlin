@@ -1,6 +1,7 @@
 package ec.yasuodev.proyecto_movil.ui.navigation
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -32,6 +33,7 @@ import ec.yasuodev.proyecto_movil.ui.core.business.SalesScreen
 import ec.yasuodev.proyecto_movil.ui.core.business.SalesViewModel
 import ec.yasuodev.proyecto_movil.ui.core.business.ReportingScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.ClientHomeScreen
+import ec.yasuodev.proyecto_movil.ui.core.home.ClientHomeViewModel
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeViewModel
 import ec.yasuodev.proyecto_movil.ui.core.home.VendedorHomeScreen
@@ -71,19 +73,12 @@ fun ClientNavGraph() {
             startDestination = "clientHome",
             Modifier.padding(innerPadding)
         ) {
-            composable("login") {
-                LoginScreen(LoginViewModel(), navController)
+            composable("MainNavGraph") {
+                AppNavGraphMain();
             }
-            composable("register") {
-                RegisterScreen(RegisterViewModel(), navController)
-            }
-            composable("reset") {
-                ResetScreen(ResetViewModel(), navController)
-            }
-
             composable("clientHome") {
                 ClientHomeScreen(
-                    viewModel = HomeViewModel(),
+                    viewModel = ClientHomeViewModel(),
                     navController = navController
                 )
             }

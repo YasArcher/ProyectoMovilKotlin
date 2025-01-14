@@ -1,6 +1,7 @@
 package ec.yasuodev.proyecto_movil.ui.navigation
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -34,6 +35,7 @@ import ec.yasuodev.proyecto_movil.ui.core.home.ClientHomeScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeScreen
 import ec.yasuodev.proyecto_movil.ui.core.home.HomeViewModel
 import ec.yasuodev.proyecto_movil.ui.core.home.VendedorHomeScreen
+import ec.yasuodev.proyecto_movil.ui.core.home.VendorHomeViewModel
 import ec.yasuodev.proyecto_movil.ui.core.manager.ManagerScreen
 import ec.yasuodev.proyecto_movil.ui.core.manager.ManagerViewModel
 import ec.yasuodev.proyecto_movil.ui.core.products.AddProductScreen
@@ -52,11 +54,13 @@ import ec.yasuodev.proyecto_movil.ui.shared.models.User
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
+
 fun SellerNavGraph() {
+    Log.d("DEBUG", "SellerNavGraph")
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val showBottomBar = currentRoute in listOf("home", "profile", "manager", "products")
+    val showBottomBar = currentRoute in listOf("vendedorHome", "profile", "manager", "products")
     val context = LocalContext.current;
     Scaffold(
         bottomBar = {
@@ -70,30 +74,15 @@ fun SellerNavGraph() {
             startDestination = "vendedorHome",
             Modifier.padding(innerPadding)
         ) {
-            composable("login") {
-                LoginScreen(LoginViewModel(), navController)
+            composable("MainNavGraph") {
+                AppNavGraphMain();
             }
-            composable("register") {
-                RegisterScreen(RegisterViewModel(), navController)
-            }
-            composable("reset") {
-                ResetScreen(ResetViewModel(), navController)
-            }
-            composable("clientHome") {
-                ClientHomeScreen(
-                    viewModel = HomeViewModel(),
-                    navController = navController
-                )
-            }
-
             composable("vendedorHome") {
                 VendedorHomeScreen(
-                    viewModel = HomeViewModel(),
+                    viewModel = VendorHomeViewModel(),
                     navController = navController
                 )
             }
-
-
             composable("profile") {
                 ProfileScreen(ProfileViewModel(), navController)
             }
@@ -187,6 +176,37 @@ fun SellerNavGraph() {
                 ProfileEditBusinessScreen(navController, ProfileEditBusinessViewModel(context),
                     backStackEntry.arguments?.getString("store")?:"")
             }
+            composable(
+                route = "editUser/{userId}/{firstName}/{lastName}/{email}/{role}/{timestamp}",
+                arguments = listOf(
+                    navArgument("userId") { type = NavType.StringType },
+                    navArgument("firstName") { type = NavType.StringType },
+                    navArgument("lastName") { type = NavType.StringType },
+                    navArgument("email") { type = NavType.StringType },
+                    navArgument("role") { type = NavType.StringType },
+                    navArgument("timestamp") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId")
+                val firstName = backStackEntry.arguments?.getString("firstName")
+                val lastName = backStackEntry.arguments?.getString("lastName")
+                val email = backStackEntry.arguments?.getString("email")
+                val role = backStackEntry.arguments?.getString("role")
+                val timestamp = backStackEntry.arguments?.getString("timestamp")
+
+                // Crea el objeto User
+                val user = User(
+                    userId ?: "",
+                    firstName ?: "",
+                    lastName ?: "",
+                    email ?: "",
+                    role ?: "",
+                    timestamp ?: ""
+                )
+
+                EditProfileScreen(EditProfileViewModel(), navController, user)
+            }
+
         }
     }
 }

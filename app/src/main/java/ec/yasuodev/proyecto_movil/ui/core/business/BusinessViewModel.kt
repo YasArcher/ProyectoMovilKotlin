@@ -21,7 +21,7 @@ import ec.yasuodev.proyecto_movil.ui.shared.models.AuxiliarSaleProduct
 import ec.yasuodev.proyecto_movil.ui.shared.models.Invoice
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import ec.yasuodev.proyecto_movil.ui.shared.models.Purchase
-import ec.yasuodev.proyecto_movil.ui.shared.models.Sale
+import ec.yasuodev.proyecto_movil.ui.shared.models.SaleTable
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import ec.yasuodev.proyecto_movil.ui.shared.models.generateUUID
 import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
@@ -39,8 +39,8 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
     open val income: LiveData<Double> = _income
     private val _expenditures = MutableLiveData<Double>(0.0)
     open val expenditures: LiveData<Double> = _expenditures
-    private val _salesList = MutableLiveData<List<Sale>>(emptyList())
-    val salesList: LiveData<List<Sale>> = _salesList
+    private val _salesList = MutableLiveData<List<SaleTable>>(emptyList())
+    val salesList: LiveData<List<SaleTable>> = _salesList
     private val _invoiceList = MutableLiveData<List<Invoice>>(emptyList())
     val invoiceList: LiveData<List<Invoice>> = _invoiceList
     private val _purchasesList = MutableLiveData<List<Purchase>>(emptyList())
@@ -168,7 +168,7 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
         viewModelScope.launch {
             val date = java.time.LocalDate.now().toString()
             try {
-                val sale = Sale(
+                val sale = SaleTable(
                     id = generateUUID(),
                     created_at = date,
                     total = (product.price * quantity).toDouble(),
@@ -293,7 +293,7 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun updateSaleProduct(sale: Sale) {
+    fun updateSaleProduct(sale: SaleTable) {
         viewModelScope.launch {
             try {
                 val originalSale = _salesList.value?.find { it.id == sale.id }
@@ -340,7 +340,7 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
     }
 
     fun getInvoicesByDate(store_id: String, date: String) {
-        Log.d("BusinessViewModel", "getInvoicesByDate: $date, business: $store_id")
+        Log.d("INVOICE", "getInvoicesByDate: $date, business: $store_id")
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("invoices").select(
@@ -392,8 +392,8 @@ open class BusinessViewModel(private val context: Context) : ViewModel() {
                         eq("created_at", date)
                         eq("id_business", store_id)
                     }
-                }.decodeList<Sale>()
-                val salesList = mutableListOf<Sale>()
+                }.decodeList<SaleTable>()
+                val salesList = mutableListOf<SaleTable>()
                 var totalIncome = 0.0
 
                 response.forEach {

@@ -7,5 +7,6 @@ data class Invoice(
     val id: String,
     val client: String,
     val business: String,
+    val create_at: String,
     val value: Double,
 )

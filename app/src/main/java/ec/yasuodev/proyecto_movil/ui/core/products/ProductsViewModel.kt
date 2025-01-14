@@ -23,7 +23,7 @@ class ProductsViewModel: ViewModel() {
 
     fun fetchStore(context: Context) {
         val token = TokenManager.getToken(context)
-        val userID = TokenDecoding.decodeJWT(token ?: "").get("sub") as? String ?: "No UserID found"
+        val userID = TokenDecoding.decodeJWT(token ?: "")["sub"] as? String ?: "No UserID found"
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("business").select(
@@ -45,7 +45,7 @@ class ProductsViewModel: ViewModel() {
             }
         }
     }
-    fun fetchProducts() {
+    private fun fetchProducts() {
         viewModelScope.launch {
             try {
                 val response = SupabaseClient.client.from("products").select(
@@ -54,7 +54,8 @@ class ProductsViewModel: ViewModel() {
                         "name",
                         "store",
                         "price",
-                        "stock"
+                        "stock",
+                        "category"
                     )
                 ) {
                     filter {

@@ -19,7 +19,7 @@ import ec.yasuodev.proyecto_movil.R
 import ec.yasuodev.proyecto_movil.ui.core.models.AddState
 import ec.yasuodev.proyecto_movil.ui.shared.models.AuxiliarSaleProduct
 import ec.yasuodev.proyecto_movil.ui.shared.models.Invoice
-import ec.yasuodev.proyecto_movil.ui.shared.models.Sale
+import ec.yasuodev.proyecto_movil.ui.shared.models.SaleTable
 import ec.yasuodev.proyecto_movil.ui.shared.models.generateUUID
 import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -27,6 +27,7 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.launch
 import ec.yasuodev.proyecto_movil.ui.shared.models.Product
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
+import ec.yasuodev.proyecto_movil.ui.shared.models.toSale
 import kotlinx.coroutines.delay
 
 class SalesViewModel(private val context: Context) : ViewModel() {
@@ -42,14 +43,14 @@ class SalesViewModel(private val context: Context) : ViewModel() {
     val income: LiveData<Double> = _income
     private val _filteredProducts = MutableLiveData<List<Product>>(emptyList())
     val filteredProducts: LiveData<List<Product>> = _filteredProducts
-    private val _salesList = MutableLiveData<List<Sale>>(emptyList())
-    val salesList: LiveData<List<Sale>> = _salesList
+    private val _salesList = MutableLiveData<List<SaleTable>>(emptyList())
+    val salesList: LiveData<List<SaleTable>> = _salesList
     private val _addState = MutableLiveData<AddState>()
     val addState: LiveData<AddState> = _addState
     private val _showDialog = MutableLiveData<Boolean>()
     val showDialog: LiveData<Boolean> = _showDialog
-    private val _invoiceId = MutableLiveData<String>()
-    val invoiceId: LiveData<String> = _invoiceId
+    private val _invoiceId = MutableLiveData<String?>()
+    val invoiceId: MutableLiveData<String?> = _invoiceId
 
     private fun showLowStockNotification(productName: String) {
         val channelId = "low_stock_channel"
@@ -85,6 +86,7 @@ class SalesViewModel(private val context: Context) : ViewModel() {
         }
         NotificationManagerCompat.from(context).notify(1, notification)
     }
+
     fun showDialog(show: Boolean) {
         _showDialog.value = show
     }
@@ -99,6 +101,7 @@ class SalesViewModel(private val context: Context) : ViewModel() {
             products.filter { it.name.contains(query, ignoreCase = true) && it.stock > 0 }
         }
     }
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun fetchBusiness(id: String) {
         viewModelScope.launch {
@@ -158,7 +161,9 @@ class SalesViewModel(private val context: Context) : ViewModel() {
     @RequiresApi(Build.VERSION_CODES.O)
     fun addProductToTable(product: Product, quantity: Int, seled_by: String) {
         Log.d("INFO", "Añadiendo producto a la tabla")
-        _invoiceId.value = generateUUID()
+        if (_invoiceId.value.isNullOrEmpty()) {
+            _invoiceId.value = generateUUID()
+        }
         viewModelScope.launch {
             try {
                 val currentSales = _salesList.value?.toMutableList() ?: mutableListOf()
@@ -170,14 +175,15 @@ class SalesViewModel(private val context: Context) : ViewModel() {
                     // Si existe, actualizar cantidad y total
                     val updatedQuantity = existingSale.quantity + quantity
                     val updatedTotal = updatedQuantity * product.price
-                    val updatedSale = existingSale.copy(quantity = updatedQuantity, total = updatedTotal)
+                    val updatedSale =
+                        existingSale.copy(quantity = updatedQuantity, total = updatedTotal)
 
                     // Reemplazar la venta existente
                     val index = currentSales.indexOf(existingSale)
                     currentSales[index] = updatedSale
                 } else {
                     // Si no existe, agregarlo como nueva venta
-                    val newSale = Sale(
+                    val newSale = SaleTable(
                         id = generateUUID(),
                         created_at = java.time.LocalDate.now().toString(),
                         total = (product.price * quantity).toDouble(),
@@ -213,61 +219,108 @@ class SalesViewModel(private val context: Context) : ViewModel() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     suspend fun confirmSales(seled_by: String) {
-
-        val invoice = Invoice(
-            id = _invoiceId.value.toString(),
-            client = seled_by,
-            business = _store.value?.id.toString(),
-            value = _salesList.value?.sumOf { it.total } ?: 0.0
-        )
-
         try {
-            SupabaseClient.client.from("invoices").insert(invoice)
-        } catch (e: Exception) {
-            _addState.value = AddState.Error("Error al confirmar la venta")
-        }
-        viewModelScope.launch {
+            // Crear la factura
+            val invoice = Invoice(
+                id = _invoiceId.value.toString(),
+                client = seled_by,
+                business = _store.value?.id.toString(),
+                value = _salesList.value?.sumOf { it.total } ?: 0.0,
+                create_at = java.time.LocalDate.now().toString()
+            )
+
             try {
-                val salesToConfirm = _salesList.value ?: emptyList()
-                if (salesToConfirm.isEmpty()) {
-                    _addState.value = AddState.Error("No hay productos para confirmar la venta")
-                    return@launch
-                }
+                SupabaseClient.client.from("invoices").insert(invoice)
+                Log.d("DEBUG", "Factura creada e insertada en la base de datos: $invoice")
+            } catch (e: Exception) {
+                Log.d("ERROR", "Error al insertar la factura en la base de datos: ${e.message}")
+                _addState.value = AddState.Error("Error al confirmar la factura")
+                return
+            }
 
-                salesToConfirm.forEach { sale ->
-                    // Insertar venta en la base de datos
-                    SupabaseClient.client.from("sales").insert(sale)
+            viewModelScope.launch {
+                try {
+                    val salesToConfirm = _salesList.value ?: emptyList()
+                    if (salesToConfirm.isEmpty()) {
+                        Log.d("DEBUG", "No hay productos en la lista de ventas para confirmar")
+                        _addState.value = AddState.Error("No hay productos para confirmar la venta")
+                        return@launch
+                    }
 
-                    // Actualizar el stock del producto en la base de datos
-                    val product = _products.value?.find { it.id == sale.product }
-                    product?.let {
-                        val updatedStock = it.stock - sale.quantity
-                        val updatedProduct = it.copy(stock = updatedStock)
-                        SupabaseClient.client.from("products").update(updatedProduct) {
-                            filter {
-                                eq("id", it.id)
+                    salesToConfirm.forEach { saleTable ->
+                        try {
+                            // Convertir SaleTable a Sale
+                            val sale = saleTable.toSale()
+
+                            // Insertar la venta en la base de datos
+                            SupabaseClient.client.from("sales").insert(sale)
+                            Log.d("DEBUG", "Venta insertada en la base de datos: $sale")
+
+                            try {
+                                // Actualizar el stock del producto en la base de datos
+                                val product = _products.value?.find { it.id == sale.product }
+                                product?.let {
+                                    val updatedStock = it.stock - sale.quantity
+                                    val updatedProduct = it.copy(stock = updatedStock)
+
+                                    SupabaseClient.client.from("products").update(updatedProduct) {
+                                        filter {
+                                            eq("id", it.id)
+                                        }
+                                    }
+                                    Log.d(
+                                        "DEBUG",
+                                        "Producto actualizado: ${updatedProduct.id}, stock actualizado a $updatedStock"
+                                    )
+
+                                    // Mostrar notificación si el stock es bajo
+                                    if (updatedStock <= 10) {
+                                        showLowStockNotification(it.name)
+                                        Log.d(
+                                            "DEBUG",
+                                            "Notificación de stock bajo enviada para: ${it.name}"
+                                        )
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Log.d(
+                                    "ERROR",
+                                    "Error al actualizar el stock del producto (${sale.product}): ${e.message}"
+                                )
                             }
-                        }
-
-                        // Mostrar notificación si el stock es bajo
-                        if (updatedStock <= 10) {
-                            showLowStockNotification(it.name)
+                        } catch (e: Exception) {
+                            Log.d(
+                                "ERROR",
+                                "Error al insertar la venta en la base de datos: ${e.message}"
+                            )
                         }
                     }
+
+                    // Limpiar la lista de ventas y actualizar la UI
+                    try {
+                        _salesList.value = emptyList()
+                        makeAuxiliarSaleProduct()
+                        Log.d("DEBUG", "Lista de ventas limpiada y vista auxiliar actualizada")
+                    } catch (e: Exception) {
+                        Log.d("ERROR", "Error al limpiar la lista de ventas: ${e.message}")
+                    }
+
+                    _addState.value = AddState.Success("Venta confirmada con éxito")
+                    Log.d("DEBUG", "Venta confirmada con éxito")
+                } catch (e: Exception) {
+                    Log.d("ERROR", "Error en el proceso de confirmación de ventas: ${e.message}")
+                    _addState.value = AddState.Error("Error al confirmar la venta")
+                } finally {
+                    resetAddState()
+                    _invoiceId.value = null
                 }
-
-                // Limpiar la lista de ventas
-                _salesList.value = emptyList()
-                makeAuxiliarSaleProduct()
-
-                _addState.value = AddState.Success("Venta confirmada con éxito")
-            } catch (e: Exception) {
-                _addState.value = AddState.Error("Error al confirmar la venta")
-            } finally {
-                resetAddState()
             }
+        } catch (e: Exception) {
+            Log.d("ERROR", "Error inesperado en confirmSales: ${e.message}")
+            _addState.value = AddState.Error("Error inesperado al confirmar la venta")
         }
     }
+
 
     private fun makeAuxiliarSaleProduct() {
         val products = _products.value
@@ -296,6 +349,7 @@ class SalesViewModel(private val context: Context) : ViewModel() {
         }
         _productsModel.value = auxiliarSaleProductList
     }
+
     private fun resetAddState() {
         viewModelScope.launch {
             delay(2000)
@@ -307,7 +361,8 @@ class SalesViewModel(private val context: Context) : ViewModel() {
         viewModelScope.launch {
             try {
                 // Filtrar la lista actual de ventas para excluir el producto a eliminar
-                val updatedSales = _salesList.value?.filter { it.product != productId } ?: emptyList()
+                val updatedSales =
+                    _salesList.value?.filter { it.product != productId } ?: emptyList()
 
                 // Actualizar la lista de ventas y recalcular el ingreso
                 _salesList.value = updatedSales
@@ -324,6 +379,7 @@ class SalesViewModel(private val context: Context) : ViewModel() {
             }
         }
     }
+
     fun editProductInTable(productId: String, newQuantity: Int) {
         viewModelScope.launch {
             try {
@@ -353,5 +409,4 @@ class SalesViewModel(private val context: Context) : ViewModel() {
             }
         }
     }
-
 }

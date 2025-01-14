@@ -35,6 +35,7 @@ fun DynamicField(
         0 -> if (passwordVisible == true) KeyboardType.Text else KeyboardType.Password
         1 -> KeyboardType.Email
         5 -> KeyboardType.Number
+        6 -> KeyboardType.Number
         else -> KeyboardType.Text
     }
 
@@ -44,6 +45,8 @@ fun DynamicField(
         2 -> "Nombre"
         3 -> "Apellido"
         4 -> "Nombre de Usuario"
+        5 -> "Precio"
+        6 -> "Stock"
         else -> ""
     }
 

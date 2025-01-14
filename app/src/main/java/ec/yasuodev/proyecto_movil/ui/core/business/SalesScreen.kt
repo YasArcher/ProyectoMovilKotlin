@@ -48,7 +48,6 @@ fun SalesScreen(
     ) {
 
         SalesContent(viewModel, navController, Modifier, store, seller)
-        confirmButton(viewModel, seller)
     }
 }
 
@@ -88,7 +87,7 @@ fun SalesContent(
         // Tabla de productos
         Spacer(modifier = Modifier.height(16.dp))
 
-        ProductsTable(viewModel)
+        ProductsTable(viewModel, seller)
 
         Spacer(modifier = Modifier.weight(1f))
     }
@@ -151,7 +150,7 @@ fun TotalCard(total: Double) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ProductsTable(viewModel: SalesViewModel) {
+fun ProductsTable(viewModel: SalesViewModel, seller: String) {
     val productsModel by viewModel.productsModel.observeAsState(emptyList())
     Column(
         modifier = Modifier
@@ -185,6 +184,7 @@ fun ProductsTable(viewModel: SalesViewModel) {
                 )
             }
         }
+        ConfirmButton(viewModel, seller)
     }
 }
 
@@ -523,7 +523,7 @@ fun EditProductDialog(
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun confirmButton(viewModel: SalesViewModel, seller: String) {
+fun ConfirmButton(viewModel: SalesViewModel, seller: String) {
     val coroutineScope = rememberCoroutineScope()
 
     Button(

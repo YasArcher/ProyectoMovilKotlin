@@ -2,6 +2,7 @@ package ec.yasuodev.proyecto_movil.ui.core.products
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,6 +48,7 @@ import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicButton
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicField
 import ec.yasuodev.proyecto_movil.ui.shared.components.DynamicText
 import ec.yasuodev.proyecto_movil.ui.shared.models.ProductCategory
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -56,84 +59,97 @@ fun AddProductScreen(
     navController: NavController,
     store: String
 ) {
-    // ÚNICA llamada a fetchCategories (evita duplicados)
-    LaunchedEffect(Unit) {
-        Log.d("AddProductScreen", "LaunchedEffect: fetchCategories()")
-        viewModel.fetchCategories()
+    Log.d("AddProductScreen", "store: $store")
+    var showLoading by remember { mutableStateOf(true) } // Estado local para controlar el indicador de carga
+    val context = LocalContext.current
+
+    LaunchedEffect(key1 = viewModel) {
+        if (TokenManager.getToken(context) == null) {
+            navController.navigate("login")
+            return@LaunchedEffect
+        }
+
+        // Retraso estático de 4000 ms antes de mostrar el contenido
+        // Configura la tienda y carga categorías
+        if (viewModel.store.value != store) {
+            viewModel.store.value = store
+        }
+        showLoading = false // Oculta el indicador de carga después del retraso
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Agregar Producto",
-                        style = MaterialTheme.typography.titleLarge.copy(color = Color.White)
+    // Muestra el indicador de carga o el contenido
+    if (showLoading) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            CircularProgressIndicator(Modifier.align(Alignment.Center))
+        }
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "Agregar Producto",
+                            style = MaterialTheme.typography.titleLarge.copy(color = Color.White)
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary
                 )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            AddContent(viewModel, navController, store)
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                AddContent(viewModel, navController)
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryDropdown(
     categories: List<ProductCategory>,
     selectedCategoryName: String,
     onCategorySelected: (ProductCategory) -> Unit
 ) {
-    // Controla si está abierto o cerrado el menú
     var expanded by remember { mutableStateOf(false) }
 
-    val focusRequester = remember { FocusRequester() }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
+    Box(
         modifier = Modifier
-            .focusRequester(focusRequester)
-            .zIndex(2f) // Para evitar que quede detrás de algo
+            .fillMaxWidth()
+            .padding(8.dp)
+            .background(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+            )
+            .clickable { expanded = true }
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        TextField(
-            value = selectedCategoryName,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Categoría") },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    expanded = !expanded
-                }
-                .focusRequester(focusRequester)
+        Text(
+            text = if (selectedCategoryName.isEmpty()) "Selecciona una categoría" else selectedCategoryName,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.bodyMedium
         )
 
-        ExposedDropdownMenu(
+        DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            categories.forEach { cat ->
+            categories.forEach { category ->
                 DropdownMenuItem(
                     text = {
-                        Text(cat.category_name, color = Color.Black)
+                        Text(
+                            text = category.category_name,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     },
                     onClick = {
-                        onCategorySelected(cat)
+                        onCategorySelected(category)
                         expanded = false
                     }
                 )
@@ -141,180 +157,101 @@ fun CategoryDropdown(
         }
     }
 }
-
-
 @Composable
 fun AddContent(
     viewModel: AddProductViewModel,
-    navController: NavController,
-    store: String
+    navController: NavController
 ) {
-    val context = LocalContext.current
-
-    val addState by viewModel.addState.observeAsState(initial = AddState.Loading)
-    val isLoading by viewModel.isLoading.observeAsState(initial = false)
-
-    // Observa tus campos del ViewModel
+    val categories = viewModel.staticCategories
     val name by viewModel.name.observeAsState("")
     val price by viewModel.price.observeAsState("")
     val stock by viewModel.stock.observeAsState("")
     val category by viewModel.category.observeAsState("")
-
     val editEnable by viewModel.editEnable.observeAsState(false)
-
-    // Observa las categorías (importante: ver si llega > 0)
-    val categories by viewModel.categories.observeAsState(emptyList())
-    Log.d("AddContent", "Observe categories => size: ${categories.size}")
-
-    // Estado local para mostrar el nombre de la categoría seleccionada
     var selectedCategoryName by remember { mutableStateOf("") }
 
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(key1 = viewModel) {
-        // Si no hay token, navega al login
-        if (TokenManager.getToken(context) == null) {
-            navController.navigate("login")
-        }
-        // Setea la tienda en el ViewModel
-        viewModel.store = store
-    }
-
-    if (isLoading) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
-        }
-    } else {
-        Surface(
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            color = MaterialTheme.colorScheme.background,
-            contentColor = MaterialTheme.colorScheme.onBackground
+                .padding(16.dp)
         ) {
-            Column(
+            Text(
+                text = "Agregar Producto",
+                style = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.primary),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            DynamicField(
+                value = name,
+                onTextFieldChange = { newValue ->
+                    viewModel.onAddChanged(newValue, price, stock, category)
+                },
+                tipo = 2,
+            )
+            Spacer(modifier = Modifier.padding(8.dp))
+
+            DynamicField(
+                value = price,
+                onTextFieldChange = { newValue ->
+                    viewModel.onAddChanged(name, newValue, stock, category)
+                },
+                tipo = 5,
+            )
+            Spacer(modifier = Modifier.padding(8.dp))
+
+            DynamicField(
+                value = stock,
+                onTextFieldChange = { newValue ->
+                    viewModel.onAddChanged(name, price, newValue, category)
+                },
+                tipo = 6,
+            )
+            Spacer(modifier = Modifier.padding(8.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Categoría",
+                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.primary),
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            CategoryDropdown(
+                categories = categories,
+                selectedCategoryName = selectedCategoryName,
+                onCategorySelected = { cat ->
+                    selectedCategoryName = cat.category_name
+                    viewModel.onAddChanged(name, price, stock, cat.id)
+                }
+            )
+
+            Spacer(modifier = Modifier.padding(16.dp))
+            DynamicButton(
+                type = 1,
+                text = "Agregar",
+                enable = editEnable,
+                method = {
+                    coroutineScope.launch {
+                        viewModel.addProduct()
+                        Toast.makeText(context, "Producto agregado correctamente", Toast.LENGTH_SHORT).show()
+                        navController.navigate("products")
+                    }
+                },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                // ----------- CAMPOS: nombre, precio, stock ----------- //
-                DynamicField(
-                    value = name,
-                    onTextFieldChange = { newValue ->
-                        viewModel.onAddChanged(
-                            newValue,
-                            price,
-                            stock,
-                            category
-                        )
-                    },
-                    tipo = 2,
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                DynamicText(
-                    message = viewModel.onEditMessageName(name),
-                    state = viewModel.isValidName(name)
-                )
-
-                Spacer(modifier = Modifier.padding(8.dp))
-                DynamicField(
-                    value = price,
-                    onTextFieldChange = { newValue ->
-                        viewModel.onAddChanged(
-                            name,
-                            newValue,
-                            stock,
-                            category
-                        )
-                    },
-                    tipo = 5,
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                DynamicText(
-                    message = viewModel.onEditMessagePrice(price),
-                    state = viewModel.isValidPrice(price)
-                )
-
-                Spacer(modifier = Modifier.padding(8.dp))
-                DynamicField(
-                    value = stock,
-                    onTextFieldChange = { newValue ->
-                        viewModel.onAddChanged(
-                            name,
-                            price,
-                            newValue,
-                            category
-                        )
-                    },
-                    tipo = 5,
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                DynamicText(
-                    message = viewModel.onEditMessageStock(stock),
-                    state = viewModel.isValidStock(stock)
-                )
-
-                Spacer(modifier = Modifier.padding(8.dp))
-
-                // --------------- COMBO PARA CATEGORÍAS --------------- //
-                Spacer(modifier = Modifier.height(8.dp))
-                // Imprime cuántas categorías hay
-                Log.d("AddContent", "CategoryDropdown => categories.size = ${categories.size}")
-
-                CategoryDropdown(
-                    categories = categories,
-                    selectedCategoryName = selectedCategoryName,
-                    onCategorySelected = { cat ->
-                        selectedCategoryName = cat.category_name
-                        // Llamamos a la misma onAddChanged, pero pasando cat.id (UUID)
-                        viewModel.onAddChanged(
-                            name,
-                            price,
-                            stock,
-                            cat.id
-                        )
-                    }
-                )
-
-                Spacer(modifier = Modifier.padding(16.dp))
-
-                // --------------- BOTÓN "Agregar" --------------- //
-                DynamicButton(
-                    type = 1,
-                    text = "Agregar",
-                    enable = editEnable,
-                    method = {
-                        coroutineScope.launch {
-                            viewModel.addProduct().apply {
-                                Toast.makeText(context, "Agregando Producto", Toast.LENGTH_SHORT)
-                                    .show()
-                            }
-                            viewModel.onAddSelected().apply {
-                                when (addState) {
-                                    is AddState.Success -> {
-                                        Toast.makeText(
-                                            context,
-                                            (addState as AddState.Success).message,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        navController.navigate("products")
-                                    }
-
-                                    is AddState.Error -> {
-                                        Toast.makeText(
-                                            context,
-                                            (addState as AddState.Error).message,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-
-                                    else -> Unit
-                                }
-                            }
-                        }
-                    }
-                )
-            }
+                    .fillMaxWidth()
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                    )
+                    .padding(vertical = 12.dp)
+            )
         }
     }
 }

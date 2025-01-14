@@ -34,7 +34,7 @@ import ec.yasuodev.proyecto_movil.ui.shared.models.User
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClientHomeScreen(viewModel: HomeViewModel, navController: NavController) {
+fun ClientHomeScreen(viewModel: ClientHomeViewModel, navController: NavController) {
     val context = LocalContext.current
     LaunchedEffect(key1 = viewModel) {
         if (TokenManager.getToken(context) == null) {
@@ -99,7 +99,7 @@ fun HomeTopBar(user: User) {
 }
 
 @Composable
-fun ClientHomeContent(viewModel: HomeViewModel, navController: NavController, user: User, context: Context) {
+fun ClientHomeContent(viewModel: ClientHomeViewModel, navController: NavController, user: User, context: Context) {
     val store by viewModel.store.observeAsState(Store("", "", "", "", false))
     val storeList by viewModel.storeList.observeAsState(listOf())
 

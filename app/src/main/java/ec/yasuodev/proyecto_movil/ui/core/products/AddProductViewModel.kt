@@ -12,13 +12,14 @@ import ec.yasuodev.proyecto_movil.ui.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 class AddProductViewModel : ViewModel() {
-    var store = ""
-
+    private val _store = MutableLiveData<String>()
+    val store: MutableLiveData<String> = _store
     private val _name = MutableLiveData<String>()
     val name: LiveData<String> = _name
 
@@ -93,12 +94,15 @@ class AddProductViewModel : ViewModel() {
         viewModelScope.launch {
             val product = Product(
                 id = generateUUID(),
-                name = name.value!!,
-                store = store,
-                price = price.value!!.toDouble(),
-                stock = stock.value!!.toInt(),
-                category = category.value!!
+                name = name.value ?: "Sin Nombre",
+                store = store.value ?: "Sin Tienda",
+                price = price.value?.toDoubleOrNull() ?: 0.0,
+                stock = stock.value?.toIntOrNull() ?: 0,
+                category = category.value ?: "Sin Categoría"
             )
+
+            Log.d("DEBUG", "Producto a insertar: $product")
+
             try {
                 val insertedProducts = SupabaseClient.client
                     .postgrest["products"]
@@ -117,20 +121,12 @@ class AddProductViewModel : ViewModel() {
         }
     }
 
-    fun fetchCategories() {
-        viewModelScope.launch {
-            try {
-                val result = SupabaseClient.client
-                    .postgrest["product_category"]
-                    .select()
-                    .decodeList<ProductCategory>()
-                Log.d("AddProductViewModel", "fetchCategories => $result")
-                _categories.value = result
-            } catch (e: Exception) {
-                Log.e("AddProductViewModel", "Error al obtener categorías", e)
-            }
-        }
-    }
+
+    val staticCategories = listOf(
+        ProductCategory(id = "2bb7c432-799d-4481-935c-82d65ca1cd6e", category_name = "Lacteo"),
+        ProductCategory(id = "9bc024f4-5b39-494d-957b-1e3319620e46", category_name = "Enlatado"),
+        ProductCategory(id = "ad78382c-1db8-49a5-bbee-76a9d8bac180", category_name = "Frutas"),
+    )
 
     suspend fun onAddSelected() {
         _isLoading.value = true

@@ -1,16 +1,14 @@
 package ec.yasuodev.proyecto_movil.ui.core.home
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,19 +21,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import ec.yasuodev.proyecto_movil.R
 import ec.yasuodev.proyecto_movil.ui.auth.utils.TokenManager
 import ec.yasuodev.proyecto_movil.ui.shared.models.Store
 import ec.yasuodev.proyecto_movil.ui.shared.models.User
-//a
-@OptIn(ExperimentalMaterial3Api::class)
+import kotlinx.coroutines.delay
+
 @Composable
-fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
+fun VendedorHomeScreen(viewModel: VendorHomeViewModel, navController: NavController) {
+    val user by viewModel.user.observeAsState(User("", "", "", "", "", "", ""))
+    val store by viewModel.store.observeAsState(Store("", "", "", "", false))
     val context = LocalContext.current
     LaunchedEffect(key1 = viewModel) {
         if (TokenManager.getToken(context) == null) {
@@ -43,10 +41,10 @@ fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
         }
         viewModel.fetchToken(context)
         viewModel.fetchStore()
-       viewModel.fetchUniqueStore()
+        while (store.id.isBlank()) {
+            delay(1000)
+        }
     }
-    val user by viewModel.user.observeAsState(User("", "", "", "", "", "", ""))
-
     Scaffold(
         containerColor = Color(0xFF9B86BE) // Fondo lavanda
     ) { innerPadding ->
@@ -57,12 +55,11 @@ fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
                 .verticalScroll(rememberScrollState())
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Encabezado con el texto "MIS NEGOCIOS"
-                VendedorTopBar(user)
+                VendedorTopBar()
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Box(
@@ -70,9 +67,7 @@ fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp) // Aplica el padding deseado aquí
                 ) {
-                    val store by viewModel.store.observeAsState(Store("", "", "", "", false)) // Observa el estado de la tienda
-                    VendedorBusinessCard(
-                        store = if (store.id.isNotBlank()) store else Store("", "Configure su negocio", "", "", false),
+                    VendedorBusinessCard(store,
                         navController = navController,
                         user = user,
                         tipo = 1 // Puedes cambiar el tipo para aplicar un borde si deseas
@@ -88,7 +83,9 @@ fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
                             color = Color.White,
                             shape = RoundedCornerShape(topStart = 45.dp, topEnd = 45.dp)
                         )
-                        .padding(horizontal = 16.dp, vertical = 24.dp), // Añade padding alrededor del formulario
+                        .padding(
+                            horizontal = 16.dp, vertical = 24.dp
+                        ), // Añade padding alrededor del formulario
                     contentAlignment = Alignment.TopCenter
                 ) {
                     Column(
@@ -119,12 +116,15 @@ fun VendedorHomeScreen(viewModel: HomeViewModel, navController: NavController) {
 }
 
 @Composable
-fun VendedorTopBar(user: User) {
+fun VendedorTopBar() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(120.dp)
-            .background(Color(0xFF9B86BE), shape = RoundedCornerShape(bottomEnd = 125.dp, bottomStart = 125.dp))
+            .background(
+                Color(0xFF9B86BE),
+                shape = RoundedCornerShape(bottomEnd = 125.dp, bottomStart = 125.dp)
+            )
             .padding(vertical = 2.dp, horizontal = 16.dp)
     ) {
         // Iconos en la parte superior
@@ -150,9 +150,7 @@ fun VendedorTopBar(user: User) {
             // Icono de la casa en la esquina derecha
             Icon(
                 painter = painterResource(id = R.drawable.baseline_home_24), // Reemplaza con el ícono de la casa
-                contentDescription = "Home",
-                tint = Color.White,
-                modifier = Modifier.size(38.dp)
+                contentDescription = "Home", tint = Color.White, modifier = Modifier.size(38.dp)
             )
         }
 
@@ -164,8 +162,7 @@ fun VendedorTopBar(user: User) {
                 .padding(bottom = 16.dp)
         ) {
             Text(
-                text = "MIS NEGOCIOS",
-                style = MaterialTheme.typography.bodyLarge.copy(
+                text = "MIS NEGOCIOS", style = MaterialTheme.typography.bodyLarge.copy(
                     color = Color.White,
                     fontFamily = FontFamily.SansSerif,
                     fontSize = 24.sp,
@@ -183,10 +180,10 @@ fun VendedorTopBar(user: User) {
 }
 
 
-
-
 @Composable
-fun VendedorHomeContent(viewModel: HomeViewModel, navController: NavController, user: User, context: Context) {
+fun VendedorHomeContent(
+    viewModel: VendorHomeViewModel, navController: NavController, user: User, context: Context
+) {
     val store by viewModel.store.observeAsState(null) // Observa la tienda principal
     val storeList by viewModel.storeList.observeAsState(listOf()) // Observa la lista de negocios
 
@@ -202,23 +199,22 @@ fun VendedorHomeContent(viewModel: HomeViewModel, navController: NavController, 
         // Tarjetas para otras tiendas (en "Otros Negocios")
         if (filteredStoreList.isNotEmpty()) {
             filteredStoreList.forEach {
-                VendedorBusinessCard(store = it, navController = navController, user = user, tipo = 1)
+                VendedorBusinessCard(
+                    store = it, navController = navController, user = user, tipo = 1
+                )
             }
         } else {
             // Mensaje para cuando no hay otras tiendas
             Text(
                 text = "No hay negocios adicionales registrados.",
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Normal
+                    color = Color.Gray, fontWeight = FontWeight.Normal
                 ),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         }
     }
 }
-
-
 
 
 @Composable
@@ -239,13 +235,12 @@ fun VendedorBusinessCard(store: Store?, navController: NavController, user: User
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.weight(1f)
+                verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)
             ) {
                 // Mostrar el nombre del negocio o el mensaje de configuración
                 if (store != null) {
                     Text(
-                        text = if (store?.name.isNullOrBlank()) "Configure su negocio" else store.name,
+                        text = store.name.ifBlank { "Configure su negocio" },
                         style = MaterialTheme.typography.titleMedium.copy(
                             color = Color(0xFF9B86BE),
                             fontWeight = FontWeight.Bold,
@@ -300,30 +295,3 @@ fun VendedorBusinessCard(store: Store?, navController: NavController, user: User
         }
     }
 }
-
-
-
-
-//@Preview(showBackground = true)
-//@Composable
-//fun VendedorHomeScreenPreview() {
-//    val navController = rememberNavController()
-//    val fakeViewModel = object : HomeViewModel() {
-//        override fun fetchStore() {}
-//        override fun fetchToken(context: Context) {}
-//    }
-//    VendedorHomeScreen(viewModel = fakeViewModel, navController = navController)
-//}
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun VendedorHomeScreenPreview() {
-    val navController = rememberNavController()
-    val fakeViewModel = object : HomeViewModel() {
-        override fun fetchStore() {}
-    }
-    VendedorHomeScreen(viewModel = fakeViewModel, navController = navController)
-}
-

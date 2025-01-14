@@ -10,18 +10,27 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import ec.yasuodev.proyecto_movil.ui.core.business.SalesViewModel
+import ec.yasuodev.proyecto_movil.ui.shared.models.ProductCategory
 
 @Composable
-fun CategoriesScreen() {
-    var total by remember { mutableStateOf(15.58) }
-    val categories = remember { mutableStateListOf("Lácteos", "Lácteos", "Lácteos", "Lácteos") }
-
+fun CategoriesScreen(
+    viewModel: CategoriesViewModel,
+    store: String
+) {
+    val store: String by viewModel.store.observeAsState(store)
+    val categories: List<ProductCategory> by viewModel.categories.observeAsState(emptyList())
+    LaunchedEffect(key1 = viewModel) {
+        viewModel.fetchCategories()
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -29,7 +38,7 @@ fun CategoriesScreen() {
     ) {
         Column {
             // Encabezado
-            CategoriesHeader(total)
+            CategoriesHeader()
 
             // Lista de categorías
             CategoriesList(categories)
@@ -43,37 +52,58 @@ fun CategoriesScreen() {
 }
 
 @Composable
-fun CategoriesHeader(total: Double) {
+fun CategoriesHeader() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
         horizontalAlignment = Alignment.Start
     ) {
-        Text(
-            text = "Categorías",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Total: $${"%.2f".format(total)}",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF4CAF50), // Verde
+        Box(
             modifier = Modifier
+                .weight(1.3f)
                 .background(
-                    color = Color(0xFFE8F5E9),
-                    shape = RoundedCornerShape(8.dp)
+                    color = Color(0xFF363062),
+                    shape = RoundedCornerShape(16.dp)
                 )
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        )
+                .padding(vertical = 8.dp, horizontal = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Categoría",
+                style = MaterialTheme.typography.titleSmall.copy(
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Box(
+            modifier = Modifier
+                .weight(1.3f)
+                .background(
+                    color = Color(0xFF363062),
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .padding(vertical = 8.dp, horizontal = 4.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Acciones",
+                style = MaterialTheme.typography.titleSmall.copy(
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
     }
 }
 
 @Composable
-fun CategoriesList(categories: List<String>) {
+fun CategoriesList(categories: List<ProductCategory>) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -114,7 +144,7 @@ fun CategoriesList(categories: List<String>) {
 }
 
 @Composable
-fun CategoryRow(category: String, onEdit: () -> Unit, onDelete: () -> Unit) {
+fun CategoryRow(category: ProductCategory, onEdit: () -> Unit, onDelete: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -124,7 +154,7 @@ fun CategoryRow(category: String, onEdit: () -> Unit, onDelete: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = category,
+            text = category.category_name,
             fontSize = 16.sp,
             color = Color.White,
             modifier = Modifier.weight(1f)

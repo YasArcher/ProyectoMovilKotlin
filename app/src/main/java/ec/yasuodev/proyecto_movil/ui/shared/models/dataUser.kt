@@ -10,5 +10,5 @@ data class User (
     val email: String,
     val nickname: String,
     val image: String,
-    val rol: String
+    val rol: String? = null
 )

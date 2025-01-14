@@ -19,8 +19,7 @@ fun BottomNavigationBar(navController: NavController, rol: String) {
         "seller" -> listOf(
             BottomNavItem.Home,
             BottomNavItem.Profile,
-            BottomNavItem.Products,
-            BottomNavItem.Settings
+            BottomNavItem.Products
         )
         "cliente" -> listOf(
             BottomNavItem.Home,
