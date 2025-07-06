@@ -35,7 +35,7 @@
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/tu_usuario/neighborhood-store-manager.git
+   git clone https://github.com/YasArcher/ProyectoMovilKotlin
    ```
 
 2. Open the project in **Android Studio**
@@ -90,7 +90,3 @@ Full Stack Developer | Mobile & Backend Enthusiast
 🌐 [LinkedIn](https://www.linkedin.com/in/marlon-masabanda-6b4984239/) | [GitHub](https://github.com/YasArcher)
 
 ---
-
-## 📄 License
-
-This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
