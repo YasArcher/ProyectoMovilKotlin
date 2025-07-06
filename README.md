@@ -40,13 +40,8 @@
 
 2. Open the project in **Android Studio**
 
-3. Add your Supabase credentials in the appropriate configuration file (`Constants.kt`):
-   ```kotlin
-   const val SUPABASE_URL = "https://your-project.supabase.co"
-   const val SUPABASE_KEY = "your-anon-key"
-   ```
 
-4. Build and run on an emulator or physical Android device.
+3. Build and run on an emulator or physical Android device.
 
 ---
 
