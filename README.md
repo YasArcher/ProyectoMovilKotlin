@@ -36,3 +36,66 @@
 1. Clone the repository:
    ```bash
    git clone https://github.com/tu_usuario/neighborhood-store-manager.git
+   ```
+
+2. Open the project in **Android Studio**
+
+3. Add your Supabase credentials in the appropriate configuration file (`Constants.kt`):
+   ```kotlin
+   const val SUPABASE_URL = "https://your-project.supabase.co"
+   const val SUPABASE_KEY = "your-anon-key"
+   ```
+
+4. Build and run on an emulator or physical Android device.
+
+---
+
+## 🧪 Usage
+
+- 📲 Launch the app and register/login using email/password
+- ➕ Add new products to your inventory
+- 📊 View sales statistics and stock status
+- ✏️ Modify product quantities and prices in real time
+
+---
+
+## 📂 Project Structure
+
+```
+📁 ui/
+├── 📁 auth/
+│ ├── 📁 login/
+│ ├── 📁 register/
+│ ├── 📁 reset/
+│ ├── 📁 models/
+│ └── 📁 utils/
+├── 📁 core/
+│ ├── 📁 business/
+│ │ ├── BusinessScreen.kt
+│ │ └── BusinessViewModel.kt
+│ ├── 📁 home/
+│ ├── 📁 manager/
+│ ├── 📁 models/
+│ ├── 📁 products/
+│ ├── 📁 profile/
+│ ├── 📁 navigation/
+│ ├── 📁 shared/
+│ ├── 📁 supabase/
+│ └── 📁 theme/
+└── MainActivity.kt
+```
+
+---
+
+## 👥 Author
+
+**Marlon Masabanda**  
+Full Stack Developer | Mobile & Backend Enthusiast  
+📧 edison.ortiz@email.com  
+🌐 [LinkedIn](https://www.linkedin.com/in/marlon-masabanda-6b4984239/) | [GitHub](https://github.com/YasArcher)
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
