@@ -86,7 +86,7 @@
 
 **Marlon Masabanda**  
 Full Stack Developer | Mobile & Backend Enthusiast  
-📧 edison.ortiz@email.com  
+📧 marlon25.masabanda@proton.me 
 🌐 [LinkedIn](https://www.linkedin.com/in/marlon-masabanda-6b4984239/) | [GitHub](https://github.com/YasArcher)
 
 ---
